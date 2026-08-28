@@ -53,7 +53,7 @@
     onStateChange(listener) { listeners.add(listener); listener({ available, state: available ? 'ARCHICAD_CONNECTED' : 'WEB_ONLY' }); return () => listeners.delete(listener); },
     executeArchicadCommand,
     addProductToArchicad: (productId) => executeArchicadCommand(COMMANDS.ADD_PRODUCT, { productId }),
-    getSelectedElements: () => executeArchicadCommand(COMMANDS.GET_SELECTION),
+    getSelectedElements: (scope = 'AZUPLIFT') => executeArchicadCommand(COMMANDS.GET_SELECTION, { scope }),
     analyzeProject: () => executeArchicadCommand(COMMANDS.ANALYZE_PROJECT),
     getProjectData: (options = {}) => executeArchicadCommand(COMMANDS.GET_PROJECT_DATA, options),
     syncProject: () => executeArchicadCommand(COMMANDS.SYNC_PROJECT)
