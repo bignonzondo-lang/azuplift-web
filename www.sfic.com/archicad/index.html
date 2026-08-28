@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Palette AZUPLIFT pour Archicad : catalogue BIM, projet et quantités.">
+  <title>AZUPLIFT | Archicad</title>
+  <link rel="stylesheet" href="../assets/site.css">
+  <script src="../assets/archicad-bridge.js" defer></script>
+  <script src="../assets/archicad.js" defer></script>
+</head>
+<body class="archicad-page">
+  <main class="archicad-shell">
+    <header class="archicad-header">
+      <a class="brand" href="../index.html" aria-label="AZUPLIFT, accueil">AZUPLIFT<span>.</span></a>
+      <div class="connection-indicator" data-connection-state aria-live="polite"><i></i><span>Mode Web</span></div>
+    </header>
+    <nav class="archicad-nav" aria-label="Navigation Archicad">
+      <a href="#accueil" class="is-active">Accueil</a><a href="#catalogue">Catalogue BIM</a><a href="#projet">Mon projet</a><a href="#quantites">Quantités</a><a href="#compte">Compte</a>
+    </nav>
+    <section id="accueil" class="archicad-intro"><p class="eyebrow">Palette Archicad</p><h1>Vos produits BIM</h1><p>Recherchez un produit et ajoutez-le à votre maquette.</p></section>
+    <section id="catalogue" class="archicad-section">
+      <form id="archicad-search" class="archicad-search"><label for="archicad-query">Rechercher dans le catalogue BIM</label><div><input id="archicad-query" type="search" placeholder="Ex. fauteuil Astrid" autocomplete="off"><button class="button button-dark" type="submit">Rechercher</button></div></form>
+      <p id="archicad-search-result" class="archicad-feedback" aria-live="polite"></p>
+      <article class="archicad-product" data-product-id="Furniture_Chairs_Stools_Benches_KOKUYO_Astrid_Lounge_Chair" data-name="Astrid Lounge Chair">
+        <img src="../assets/astrid-lounge-chair-1.png" alt="Fauteuil Astrid Lounge Chair KOKUYO">
+        <div><p class="manufacturer">KOKUYO TH</p><h2>Astrid Lounge Chair</h2><p>Référence unique · <b>Furniture_Chairs_Stools_Benches_KOKUYO_Astrid_Lounge_Chair</b></p><div class="badges"><span>Revit</span><span>SketchUp</span><span>DWG</span></div></div>
+        <button class="button button-primary archicad-add" type="button" data-product-id="Furniture_Chairs_Stools_Benches_KOKUYO_Astrid_Lounge_Chair">Ajouter à Archicad</button>
+      </article>
+    </section>
+    <section id="projet" class="archicad-section archicad-panel">
+      <div class="archicad-section-heading"><div><p class="eyebrow">Maquette</p><h2>Mon projet</h2></div><button class="button outline-dark" type="button" data-archicad-action="GET_PROJECT_DATA">Lire la maquette</button></div>
+      <p class="archicad-empty" data-project-output>Aucune donnée de maquette reçue. Connectez AZUPLIFT à Archicad pour consulter le projet.</p>
+    </section>
+    <section id="quantites" class="archicad-section archicad-panel">
+      <div class="archicad-section-heading"><div><p class="eyebrow">Quantitatif</p><h2>Quantités</h2></div><button class="button outline-dark" type="button" data-archicad-action="EXTRACT_QUANTITIES">Extraire les quantités</button></div>
+      <div class="table-wrap archicad-quantities" hidden><table><thead><tr><th>Produit</th><th>Référence</th><th>Qté</th><th>Unité</th></tr></thead><tbody data-quantities-output></tbody></table></div>
+      <p class="archicad-empty" data-quantities-empty>Aucune quantité extraite.</p>
+    </section>
+    <section id="compte" class="archicad-section archicad-panel"><p class="eyebrow">Compte</p><h2>Synchronisation AZUPLIFT</h2><p class="archicad-empty">La synchronisation vers l’API sera disponible après configuration sécurisée de l’API AZUPLIFT.</p><button class="button button-dark" type="button" data-archicad-action="SYNC_PROJECT">Synchroniser le projet</button></section>
+    <p class="archicad-feedback" data-archicad-feedback aria-live="polite"></p>
+  </main>
+</body>
+</html>
