@@ -1,39 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const menuButton = document.querySelector('.menu-toggle');
-  const navigation = document.querySelector('.main-nav');
-  const cartCount = document.querySelector('#cart-count');
-  menuButton?.addEventListener('click', () => {
-    const open = navigation.classList.toggle('open');
-    menuButton.setAttribute('aria-expanded', String(open));
-  });
-
-  const searchForm = document.querySelector('#product-search');
-  const searchInput = document.querySelector('#search');
-  const searchResult = document.querySelector('#search-result');
-  const categories = [...document.querySelectorAll('.category')];
-  searchForm?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const term = searchInput.value.trim().toLocaleLowerCase('fr');
-    let count = 0;
-    categories.forEach((category) => {
-      const visible = !term || category.dataset.name.toLocaleLowerCase('fr').includes(term);
-      category.hidden = !visible;
-      count += Number(visible);
-    });
-    searchResult.textContent = term ? `${count} univers produit${count === 1 ? '' : 's'} trouvé${count === 1 ? '' : 's'}.` : '';
-    document.querySelector('#products')?.scrollIntoView({ behavior: 'smooth' });
-  });
-
-  document.querySelectorAll('.favorite').forEach((button) => button.addEventListener('click', () => {
-    const active = button.classList.toggle('is-favorite');
-    button.setAttribute('aria-pressed', String(active));
-    button.textContent = active ? '♥' : '♡';
-  }));
-  document.querySelectorAll('.add-cart:not(a)').forEach((button) => button.addEventListener('click', () => {
-    const nextCount = Number(cartCount?.textContent || 0) + 1;
-    if (cartCount) cartCount.textContent = String(nextCount);
-    button.textContent = 'Ajouté ✓';
-  }));
-  const year = document.querySelector('#year');
-  if (year) year.textContent = new Date().getFullYear();
-});
+const AZUPLIFT_DEMO_PRODUCT={productId:'Furniture_Chairs_Stools_Benches_KOKUYO_Astrid_Lounge_Chair',name:'Astrid Lounge Chair',manufacturer:'KOKUYO TH',unit:'U',price:185000,stock:12,supplier:'AZUPLIFT Demo Supplier — Cotonou'};
+const AZUPLIFT_CART_KEY='azuplift-demo-cart-v1';
+const AzupliftDemoCart={read(){try{const v=JSON.parse(localStorage.getItem(AZUPLIFT_CART_KEY));return v?.version===1&&Array.isArray(v.items)?v:{version:1,items:[]}}catch{return{version:1,items:[]}}},write(cart){localStorage.setItem(AZUPLIFT_CART_KEY,JSON.stringify(cart));},add(product=AZUPLIFT_DEMO_PRODUCT,quantity=1){const c=this.read(),i=c.items.find(x=>x.productId===product.productId);if(i)i.quantity=Math.min(product.stock,i.quantity+quantity);else c.items.push({...product,quantity:Math.min(product.stock,quantity)});this.write(c);return c},replace(items){this.write({version:1,items:items.filter(x=>x?.productId===AZUPLIFT_DEMO_PRODUCT.productId&&Number.isInteger(x.quantity)&&x.quantity>0).map(x=>({...AZUPLIFT_DEMO_PRODUCT,quantity:Math.min(AZUPLIFT_DEMO_PRODUCT.stock,x.quantity)}))});return this.read()}};window.AzupliftDemoCart=AzupliftDemoCart;
+document.addEventListener('DOMContentLoaded',()=>{const cartCount=document.querySelector('#cart-count');const count=()=>AzupliftDemoCart.read().items.reduce((n,x)=>n+x.quantity,0);if(cartCount)cartCount.textContent=String(count());document.querySelectorAll('.product-card .add-cart').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();AzupliftDemoCart.add();if(cartCount)cartCount.textContent=String(count());button.textContent='Ajouté au panier démo ✓';}));document.querySelector('#year')&&(document.querySelector('#year').textContent=new Date().getFullYear());});

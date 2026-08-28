@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const bridge = window.AzupliftArchicadBridge;
   const feedback = document.querySelector('[data-archicad-feedback]');
   const productFeedback = document.querySelector('[data-product-feedback]');
+  let latestCommercialQuantities = [];
   const indicator = document.querySelector('[data-connection-state]');
   const setFeedback = (message, type = '') => { feedback.textContent = message; feedback.className = `archicad-feedback ${type}`; };
   const setProductFeedback = (message, type = '') => { productFeedback.textContent = message; productFeedback.className = `archicad-product-feedback ${type}`; };
@@ -17,10 +18,12 @@ document.addEventListener('DOMContentLoaded', () => {
     output.textContent = `${data.count} objet(s) AZUPLIFT sélectionné(s) : ${data.elements.map((element) => `${element.productId} (${element.elementId || element.guid})`).join(', ')}.`;
   };
   const renderAnalysis = (data) => {
+    latestCommercialQuantities = (data.quantities || []).filter((item) => item.productId === AZUPLIFT_DEMO_PRODUCT.productId && Number.isInteger(item.quantity) && item.quantity > 0);
     document.querySelector('[data-analysis-output]').textContent = `${data.project?.name || 'Projet'} · ${data.totalAzupliftElements || 0} objet(s) AZUPLIFT sur ${data.totalElements || 0} élément(s) dans la maquette.`;
     const table = document.querySelector('.archicad-quantities'), body = document.querySelector('[data-quantities-output]');
     body.replaceChildren(...(data.quantities || []).map((item) => { const row = document.createElement('tr'); [item.productId, item.name, item.manufacturer, item.quantity, item.unit].forEach((value) => { const cell = document.createElement('td'); cell.textContent = String(value || '—'); row.append(cell); }); return row; }));
     table.hidden = !(data.quantities || []).length;
+    document.querySelector('[data-send-cart]').disabled = !latestCommercialQuantities.length;
   };
   const renderProject = (data) => { document.querySelector('[data-project-output]').textContent = `${data.project?.name || 'Projet'} · ${data.returned}/${data.totalAvailable} élément(s) retournés${data.truncated ? ' (liste tronquée)' : ''}.`; };
   const run = async (button, command) => {
@@ -35,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     finally { button.disabled = false; button.textContent = button.dataset.originalText; }
   };
   document.querySelectorAll('[data-command]').forEach((button) => button.addEventListener('click', () => run(button, button.dataset.command)));
+  document.querySelector('[data-send-cart]').addEventListener('click', () => { AzupliftDemoCart.replace(latestCommercialQuantities); setFeedback('Quantités réellement reçues d’Archicad envoyées au panier de démonstration.', 'is-success'); window.location.href = '../panier-projet.html'; });
   document.querySelectorAll('[data-add-product]').forEach((button) => button.addEventListener('click', async () => {
     button.disabled = true; button.dataset.originalText ||= button.textContent; button.textContent = 'Placement en cours…';
     setProductFeedback('Cliquez maintenant sur un point dans la zone de dessin Archicad. Échap annule le placement.', 'is-pending');
