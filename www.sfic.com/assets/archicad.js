@@ -1,8 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
   const bridge = window.AzupliftArchicadBridge;
   const feedback = document.querySelector('[data-archicad-feedback]');
+  const productFeedback = document.querySelector('[data-product-feedback]');
   const indicator = document.querySelector('[data-connection-state]');
   const setFeedback = (message, type = '') => { feedback.textContent = message; feedback.className = `archicad-feedback ${type}`; };
+  const setProductFeedback = (message, type = '') => { productFeedback.textContent = message; productFeedback.className = `archicad-product-feedback ${type}`; };
   const setConnection = ({ available }) => {
     indicator.dataset.state = available ? 'ARCHICAD_CONNECTED' : 'WEB_ONLY';
     indicator.querySelector('span').textContent = available ? 'Archicad connecté' : 'Ouvert dans le navigateur';
@@ -34,11 +36,13 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   document.querySelectorAll('[data-command]').forEach((button) => button.addEventListener('click', () => run(button, button.dataset.command)));
   document.querySelectorAll('[data-add-product]').forEach((button) => button.addEventListener('click', async () => {
-    button.disabled = true; button.dataset.originalText ||= button.textContent; button.textContent = 'Cliquez dans la maquette…';
+    button.disabled = true; button.dataset.originalText ||= button.textContent; button.textContent = 'Placement en cours…';
+    setProductFeedback('Cliquez maintenant sur un point dans la zone de dessin Archicad. Échap annule le placement.', 'is-pending');
     try {
       const data = await bridge.addProductToArchicad(button.dataset.addProduct);
-      setFeedback(`Objet placé dans Archicad : ${data.productId} · ${data.elementGuid}.`, 'is-success');
-    } catch (error) { setFeedback(`${error.code || 'ARCHICAD_ERROR'} : ${error.message || 'Erreur Archicad.'}`, 'is-error'); }
+      const message = `Objet placé dans Archicad : ${data.productId} · ${data.elementGuid}.`;
+      setProductFeedback(message, 'is-success'); setFeedback(message, 'is-success');
+    } catch (error) { const message = `${error.code || 'ARCHICAD_ERROR'} : ${error.message || 'Erreur Archicad.'}`; setProductFeedback(message, 'is-error'); setFeedback(message, 'is-error'); }
     finally { button.disabled = false; button.textContent = button.dataset.originalText; }
   }));
   let selectionTimer;
