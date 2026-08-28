@@ -1,51 +1,22 @@
-# Intégration AZUPLIFT Web ↔ Add-On Archicad
+# AZUPLIFT WebBridge 1.0
 
-## Ce qui est livré côté Web
+La palette HTTPS `/archicad/` utilise uniquement `window.AZUPLIFT_HOST.ExecuteCommand(requestJson)` fourni par l’Add-On Archicad 29.3100. Aucune API C++, WebSocket, port local ou réponse simulée n’est utilisée dans le site public.
 
-- `archicad/index.html` : route statique `/archicad/`, adaptée à une palette compacte.
-- `assets/archicad-bridge.js` : façade isolée. Elle ne comporte ni API C++, ni WebSocket, ni port, ni endpoint inventé.
-- `assets/archicad.js` : interface de catalogue, de projet, de quantités et retours utilisateur.
-- `assets/archicad-models.d.ts` : modèles TypeScript `Product`, `BIMElement`, `Quantity`, `Project`, requête, réponse et interface `AzupliftApiClient`.
+## Enveloppe
 
-Le site public reste utilisable sans plugin. En l’absence d’adaptateur, il affiche « Mode Web » et les actions Archicad retournent un message clair.
+Chaque requête contient `version: "1.0"`, un `requestId`, une `command` et un `payload`. Les commandes sont `GET_SELECTION`, `ANALYZE_PROJECT`, `ADD_PRODUCT`, `GET_PROJECT_DATA` et `SYNC_PROJECT`. La réponse est vérifiée : version, identifiant de requête, commande et succès doivent correspondre avant tout rendu.
 
-## Contrat attendu de l’Add-On
+`window.AZUPLIFT_UI.onSelectionChanged` est enregistré par le frontend puis déclenche, avec debounce, une nouvelle lecture `GET_SELECTION`.
 
-Après validation avec le DevKit Archicad 29.3100, l’Add-On doit enregistrer son véritable adaptateur dans la page :
+## État actuel
 
-```js
-window.AzupliftArchicadBridge.registerAdapter({
-  request: async (request) => ({ success: true, action: '...' }),
-  subscribe: (listener) => () => {}
-});
-```
+- `GET_SELECTION`, `ANALYZE_PROJECT` et `GET_PROJECT_DATA` affichent seulement les données réellement renvoyées par l’Add-On.
+- `ADD_PRODUCT` est désactivé publiquement : aucun GSM/Library Part et aucune correspondance vérifiée `productId → GSM` ne sont disponibles. Le C++ retourne actuellement `NOT_IMPLEMENTED` et le site ne le transforme jamais en succès.
+- `SYNC_PROJECT` expose honnêtement `NOT_CONFIGURED` ou `NOT_IMPLEMENTED` jusqu’à la livraison de l’API AZUPLIFT.
+- Produit de démonstration : `Furniture_Chairs_Stools_Benches_KOKUYO_Astrid_Lounge_Chair`.
 
-`request` reçoit uniquement l’une de ces intentions Web : `ADD_PRODUCT`, `GET_SELECTED_ELEMENTS`, `GET_PROJECT_DATA`, `EXTRACT_QUANTITIES`, `SYNC_PROJECT`.
+## Limites serveur et sécurité
 
-Pour l’ajout de produit, la requête contient un `productId` stable, par exemple `Furniture_Chairs_Stools_Benches_KOKUYO_Astrid_Lounge_Chair`. Les résultats doivent contenir au minimum `success` et `action`; `PRODUCT_ADDED` peut contenir `productId` et `elementGuid`. Les données de projet doivent suivre les modèles TypeScript fournis.
+Il n’existe actuellement ni API catalogue/projet/quantités, ni authentification métier. Aucune clé ni secret n’est inclus côté navigateur. La future API devra être HTTPS, validée côté serveur, protégée par session `HttpOnly`/CSRF ou un mécanisme équivalent.
 
-Le nom de cet adaptateur est un contrat AZUPLIFT à valider, et non la prétention qu’une API JavaScript Archicad existe déjà.
-
-## API AZUPLIFT à définir côté serveur
-
-Aucun appel API n’est fait par le site avant que le contrat serveur soit fourni. Les capacités nécessaires sont : authentification, lecture de produits et objets BIM, lecture/écriture de projets, envoi de quantités et synchronisation. Les chemins HTTP, schémas d’authentification et statuts restent à définir par l’API AZUPLIFT.
-
-Variables de déploiement attendues côté serveur ou configuration injectée au build :
-
-- `AZUPLIFT_API_BASE_URL`
-- `AZUPLIFT_WEB_ORIGIN`
-- `AZUPLIFT_OAUTH_CLIENT_ID` si l’authentification l’exige
-
-Ne jamais exposer de secret ou de credential serveur dans les fichiers servis au navigateur.
-
-## Déploiement
-
-Déployer le dossier `www.sfic.com` en veillant à ce que la route de répertoire `/archicad/` serve `archicad/index.html`. La palette Archicad doit charger cette même URL. La route est autonome et n’ajoute aucune dépendance de build.
-
-## À réaliser côté Add-On C++
-
-1. Vérifier dans le DevKit 29.3100 le mécanisme officiel de navigateur embarqué et d’injection JavaScript.
-2. Implémenter puis valider le transport qui répond au contrat d’adaptateur ci-dessus.
-3. Mapper `ADD_PRODUCT` vers le téléchargement, chargement et insertion de l’objet BIM.
-4. Lire les éléments et quantités de la maquette, puis retourner les modèles AZUPLIFT.
-5. Gérer connexion, annulation, erreurs et synchronisation avec l’API côté serveur.
+Les formats RFA, SKP, DWG et FBX restent téléchargeables depuis la fiche produit. Ils ne sont jamais envoyés au C++ comme s’il s’agissait d’un fichier GSM Archicad.
