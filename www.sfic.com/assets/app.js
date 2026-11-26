@@ -183,7 +183,7 @@ function catalogue(){
 function produit(id){return catalogue().find(p=>p.id===id)||null}
 function fournisseur(id){return FOURNISSEURS.find(f=>f.id===id)||Store.org(id)||{id,nom:'Fournisseur',ville:'',delai:'À confirmer'}}
 function univers(id){return UNIVERS.find(u=>u.id===id)||{id,nom:id}}
-function visuel(p){return p.image?`<img src="${p.image}" alt="${esc(p.nom)}" loading="lazy">`:illustration(p.univers)}
+function visuel(p){return p.image?`<img src="${p.image}" alt="${esc(p.nom)}">`:illustration(p.univers)}
 function meilleurPrix(p){return Math.min(...p.offres.map(o=>o.prix))}
 function stockTotal(p){return p.offres.reduce((n,o)=>n+o.stock,0)}
 
