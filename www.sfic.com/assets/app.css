@@ -338,3 +338,4 @@ p{margin:0 0 1em}
 .recherche input{min-width:0}
 @media (max-width:560px){.wrap{width:calc(100% - 28px)}.logo{font-size:1.1rem;gap:7px}.logo svg{width:24px;height:24px}.cart-link{padding:6px}}
 .panneau-corps,.fil{overflow-wrap:anywhere}
+@media (max-width:520px){.ligne{grid-template-columns:64px minmax(0,1fr);padding:14px}.ligne>div:last-child{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center}.ligne>div:last-child .qte{margin:0}.ligne-visuel{width:64px;height:56px}.choix[style]{grid-template-columns:1fr!important}.etapes-achat span{padding:10px 8px;font-size:.8rem}}

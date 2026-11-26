@@ -1,9 +1,81 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>AZUPLIFT | Archicad</title><link rel="stylesheet" href="../assets/site.css?v=20260828c"><script src="../assets/site.js" defer></script><script src="../assets/archicad-bridge.js?v=20260828c" defer></script><script src="../assets/archicad.js?v=20260828c" defer></script></head>
-<body class="archicad-page"><main class="archicad-shell"><header class="archicad-header"><a class="brand" href="../index.html">AZUPLIFT<span>.</span></a><div class="connection-indicator" data-connection-state aria-live="polite"><i></i><span>Ouvert dans le navigateur</span></div></header>
-<nav class="archicad-nav" aria-label="Navigation Archicad"><a href="#accueil" class="is-active">Accueil</a><a href="#catalogue">Catalogue BIM</a><a href="#objets">Mes objets</a><a href="#projet">Mon projet</a><a href="#quantites">Quantités</a><a href="#synchronisation">Synchronisation</a></nav>
-<section id="accueil" class="archicad-intro"><p class="eyebrow">Palette Archicad</p><h1>AZUPLIFT Connected</h1><p data-home-status>Ouvrez cette interface dans Archicad pour lire la sélection et analyser le projet.</p><p class="archicad-demo-note">Parcours démo : placer Astrid → analyser → envoyer au panier → adresse → simuler le paiement.</p></section>
-<section id="catalogue" class="archicad-section"><form id="archicad-search" class="archicad-search"><label for="archicad-query">Rechercher dans le catalogue BIM</label><div><input id="archicad-query" type="search" placeholder="Ex. fauteuil Astrid" autocomplete="off"><button class="button button-dark" type="submit">Rechercher</button></div></form><p id="archicad-search-result" class="archicad-feedback" aria-live="polite"></p><article class="archicad-product" data-product-id="Furniture_Chairs_Stools_Benches_KOKUYO_Astrid_Lounge_Chair"><img src="../assets/astrid-lounge-chair-1.png" alt="Fauteuil Astrid Lounge Chair KOKUYO"><div><p class="manufacturer">KOKUYO TH</p><h2>Astrid Lounge Chair</h2><p>Référence unique · Furniture_Chairs_Stools_Benches_KOKUYO_Astrid_Lounge_Chair</p><div class="badges"><span>GSM</span><span>RFA</span><span>SKP</span><span>DWG</span><span>FBX</span></div></div><button class="button button-primary archicad-add" type="button" data-add-product="Furniture_Chairs_Stools_Benches_KOKUYO_Astrid_Lounge_Chair">Ajouter à Archicad</button><p class="archicad-product-feedback" data-product-feedback aria-live="assertive">Après le clic, choisissez un point dans la zone de dessin Archicad.</p></article></section>
-<section id="objets" class="archicad-section archicad-panel"><div class="archicad-section-heading"><div><p class="eyebrow">Sélection</p><h2>Mes objets</h2></div><button class="button outline-dark" type="button" data-command="GET_SELECTION">Lire la sélection</button></div><p class="archicad-empty" data-selection-output>Aucun objet sélectionné.</p></section>
-<section id="projet" class="archicad-section archicad-panel"><div class="archicad-section-heading"><div><p class="eyebrow">Maquette</p><h2>Mon projet</h2></div><button class="button outline-dark" type="button" data-command="GET_PROJECT_DATA">Lire le détail</button></div><p class="archicad-empty" data-project-output>Aucune donnée de projet reçue.</p></section>
-<section id="quantites" class="archicad-section archicad-panel"><div class="archicad-section-heading"><div><p class="eyebrow">Objets placés depuis AZUPLIFT</p><h2>Quantités AZUPLIFT</h2></div><button class="button outline-dark" type="button" data-command="ANALYZE_PROJECT">Analyser le projet</button></div><p class="archicad-empty" data-analysis-output>Aucune analyse lancée.</p><div class="table-wrap archicad-quantities" hidden><table><thead><tr><th>Product ID</th><th>Produit</th><th>Fabricant</th><th>Quantité</th><th>Unité</th></tr></thead><tbody data-quantities-output></tbody></table></div><button class="button button-primary" type="button" data-send-cart disabled>Envoyer les quantités au panier démo</button></section>
-<section id="synchronisation" class="archicad-section archicad-panel"><p class="eyebrow">Synchronisation</p><h2>Synchronisation manuelle</h2><p class="archicad-empty">Aucune API serveur AZUPLIFT n’est configurée à ce stade.</p><button class="button button-dark" type="button" data-command="SYNC_PROJECT">Synchroniser</button></section><p class="archicad-feedback" data-archicad-feedback aria-live="polite"></p></main></body></html>
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AZUPLIFT | Archicad</title>
+<link rel="stylesheet" href="/assets/app.css?v=2">
+<link rel="stylesheet" href="/assets/palette.css?v=2">
+<script src="/assets/app.js?v=2"></script>
+<script src="/assets/archicad-bridge.js?v=20260828c" defer></script>
+<script src="/assets/archicad.js?v=2" defer></script>
+</head>
+<body class="pal">
+<header class="pal-tete">
+  <a class="pal-logo" href="/" target="_blank" rel="noopener"><svg width="22" height="22" viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="1" width="28" height="28" fill="#F4B21B"/><path d="M7 22 L15 7 L23 22" fill="none" stroke="#13233A" stroke-width="3"/><path d="M10.5 16.5 L19.5 16.5" stroke="#13233A" stroke-width="2"/></svg>AZUPLIFT</a>
+  <span class="pal-etat" data-connection-state data-state="WEB_ONLY" aria-live="polite"><i></i><span>Hors Archicad</span></span>
+</header>
+<nav class="pal-onglets" aria-label="Rubriques de la palette">
+  <a href="#accueil">Accueil</a><a href="#catalogue">Catalogue</a><a href="#objets">Mes objets</a><a href="#projet">Projet</a><a href="#quantites">Quantités</a><a href="#synchronisation">Synchro</a>
+</nav>
+
+<main class="pal-corps">
+<section id="accueil" class="pal-vue">
+  <div class="pal-projet">
+    <span class="pal-petit">Projet Archicad</span>
+    <h1 data-project-name>Projet en attente</h1>
+    <p data-home-status>Ouvrez cette palette dans Archicad pour lire la maquette.</p>
+  </div>
+  <div class="pal-actions">
+    <a href="#catalogue" class="pal-action"><b>Placer un produit</b><span>Catalogue BIM</span></a>
+    <button type="button" class="pal-action" data-go-analyse><b>Analyser la maquette</b><span>Quantitatif AZUPLIFT</span></button>
+    <a href="#objets" class="pal-action"><b>Ma sélection</b><span>Objets AZUPLIFT</span></a>
+    <a href="/panier" target="_blank" rel="noopener" class="pal-action"><b>Panier du projet</b><span data-pal-panier>0 article</span></a>
+  </div>
+  <div class="pal-compte" data-compte></div>
+  <ol class="pal-parcours">
+    <li>Choisissez un produit dans le catalogue et cliquez sur Ajouter à Archicad.</li>
+    <li>Cliquez un point sur le plan. L'objet est créé avec sa référence AZUPLIFT.</li>
+    <li>Analysez la maquette pour obtenir le quantitatif par produit.</li>
+    <li>Envoyez les quantités au panier, puis commandez ou demandez un devis.</li>
+  </ol>
+</section>
+
+<section id="catalogue" class="pal-vue" hidden>
+  <form id="archicad-search" class="pal-recherche" role="search">
+    <label class="sr" for="archicad-query">Rechercher un produit</label>
+    <input id="archicad-query" type="search" placeholder="Fauteuil, plaque, membrane…" autocomplete="off">
+  </form>
+  <div class="pal-filtres" data-filtres></div>
+  <p class="pal-info" id="archicad-search-result" aria-live="polite"></p>
+  <div data-pal-catalogue></div>
+  <p class="pal-retour" data-product-feedback aria-live="assertive" hidden></p>
+</section>
+
+<section id="objets" class="pal-vue" hidden>
+  <div class="pal-entete"><h2>Mes objets</h2><button class="pal-btn pal-btn-trait" type="button" data-command="GET_SELECTION">Lire la sélection</button></div>
+  <p class="pal-info">Mise à jour automatique quand vous sélectionnez dans la maquette. Seuls les objets placés depuis AZUPLIFT sont listés.</p>
+  <div data-selection-output><div class="pal-vide">Aucun objet sélectionné.</div></div>
+</section>
+
+<section id="projet" class="pal-vue" hidden>
+  <div class="pal-entete"><h2>Mon projet</h2><button class="pal-btn pal-btn-trait" type="button" data-command="GET_PROJECT_DATA">Lire la maquette</button></div>
+  <div data-project-output><div class="pal-vide">Aucune donnée reçue. Lisez la maquette pour voir la répartition des éléments.</div></div>
+</section>
+
+<section id="quantites" class="pal-vue" hidden>
+  <div class="pal-entete"><h2>Quantités</h2><button class="pal-btn pal-btn-trait" type="button" data-command="ANALYZE_PROJECT">Analyser</button></div>
+  <p class="pal-info" data-analysis-output>Aucune analyse lancée. Les quantités viennent uniquement des objets placés depuis AZUPLIFT.</p>
+  <div data-quantities-output></div>
+  <div class="pal-total" data-quantities-total hidden></div>
+  <button class="pal-btn pal-btn-chantier pal-large" type="button" data-send-cart disabled>Envoyer au panier du projet</button>
+</section>
+
+<section id="synchronisation" class="pal-vue" hidden>
+  <div class="pal-entete"><h2>Synchronisation</h2><button class="pal-btn pal-btn-trait" type="button" data-command="SYNC_PROJECT">Synchroniser</button></div>
+  <div class="pal-vide">La synchronisation enverra le projet et ses quantités vers votre espace AZUPLIFT. Elle sera active dès la mise en service du serveur AZUPLIFT. Aucune donnée n'est envoyée pour l'instant.</div>
+  <div data-sync-output></div>
+</section>
+</main>
+<p class="pal-message" data-archicad-feedback aria-live="polite"></p>
+</body>
+</html>

@@ -1,0 +1,76 @@
+/* Palette AZUPLIFT dans Archicad. Pensée pour 320 à 480 px de large. */
+body.pal{background:var(--beton);font-size:14px;line-height:1.5;min-height:100vh;display:flex;flex-direction:column}
+.pal-tete{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:var(--encre);color:#fff;position:sticky;top:0;z-index:5}
+.pal-logo{display:flex;align-items:center;gap:8px;color:#fff;text-decoration:none;font:700 1.05rem var(--display);letter-spacing:.03em}
+.pal-logo:hover{color:var(--chantier)}
+.pal-etat{display:flex;align-items:center;gap:6px;font-size:.78rem;color:#C9D2E0;padding:4px 9px;border:1px solid rgba(255,255,255,.2);border-radius:20px;white-space:nowrap}
+.pal-etat i{width:8px;height:8px;border-radius:50%;background:#8A97AC}
+.pal-etat[data-state=ARCHICAD_CONNECTED]{color:#BFF0D4;border-color:rgba(127,211,166,.5)}
+.pal-etat[data-state=ARCHICAD_CONNECTED] i{background:#4CC789;box-shadow:0 0 0 3px rgba(76,199,137,.25)}
+.pal-onglets{display:flex;overflow-x:auto;background:var(--papier);border-bottom:1px solid var(--trait);position:sticky;top:46px;z-index:4;scrollbar-width:none}
+.pal-onglets a{flex:1 0 auto;text-align:center;padding:11px 8px 9px;font-weight:600;font-size:.82rem;color:var(--encre-3);text-decoration:none;border-bottom:3px solid transparent}
+.pal-onglets a[aria-current=page]{color:var(--encre);border-bottom-color:var(--chantier)}
+.pal-corps{flex:1;padding:14px}
+.pal-vue h2{font-size:1.25rem;margin:0}
+.pal-petit{font-size:.78rem;color:var(--encre-3)}
+.pal-info{color:var(--encre-2);font-size:.86rem;margin:8px 0 12px}
+.pal-entete{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+
+.pal-projet{background:var(--papier);border:1px solid var(--trait);border-left:4px solid var(--plan);padding:14px 16px;margin-bottom:12px}
+.pal-projet h1{font-size:1.6rem;margin:2px 0 4px;font-stretch:condensed}
+.pal-projet p{margin:0;color:var(--encre-2);font-size:.86rem}
+.pal-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.pal-action{display:flex;flex-direction:column;gap:2px;text-align:left;padding:12px;background:var(--papier);border:1px solid var(--trait);border-radius:var(--r);color:var(--encre);text-decoration:none;font:inherit;cursor:pointer;min-height:64px}
+.pal-action:hover{border-color:var(--encre);color:var(--encre)}
+.pal-action b{font-family:var(--display);font-weight:600;font-size:1rem;line-height:1.15}
+.pal-action span{font-size:.78rem;color:var(--encre-3)}
+.pal-compte{font-size:.84rem;color:var(--encre-2);padding:10px 12px;background:var(--papier);border:1px dashed var(--trait-fort);margin-bottom:12px}
+.pal-parcours{margin:0;padding:0 0 0 20px;color:var(--encre-2);font-size:.84rem;display:grid;gap:6px}
+.pal-parcours li::marker{font:600 .9rem var(--display);color:var(--plan)}
+
+.pal-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font:600 .86rem var(--texte);padding:9px 12px;border-radius:var(--r);border:1px solid transparent;cursor:pointer;text-decoration:none;min-height:38px}
+.pal-btn-chantier{background:var(--chantier);color:var(--encre)}
+.pal-btn-chantier:hover{background:#FFC63D}
+.pal-btn-encre{background:var(--encre);color:#fff}
+.pal-btn-trait{background:var(--papier);color:var(--encre);border-color:var(--trait-fort)}
+.pal-btn-trait:hover{border-color:var(--encre)}
+.pal-btn:disabled{opacity:.5;cursor:not-allowed}
+.pal-btn[data-busy]::after{content:"";width:.8em;height:.8em;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:pal-tour .7s linear infinite}
+@keyframes pal-tour{to{transform:rotate(360deg)}}
+.pal-large{width:100%;margin-top:12px;min-height:44px;font-size:.95rem}
+
+.pal-recherche input{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--trait-fort);border-radius:var(--r);background:#fff}
+.pal-filtres{display:flex;gap:6px;overflow-x:auto;margin:10px 0 0;padding-bottom:2px;scrollbar-width:none}
+.pal-filtres button{flex:none;font:500 .8rem var(--texte);padding:5px 10px;border-radius:14px;border:1px solid var(--trait-fort);background:var(--papier);color:var(--encre-2);cursor:pointer}
+.pal-filtres button[aria-pressed=true]{background:var(--encre);border-color:var(--encre);color:#fff}
+
+.pal-produit{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;padding:12px;background:var(--papier);border:1px solid var(--trait);margin-bottom:8px}
+.pal-produit-visuel{width:64px;height:64px;background:#F3F6FC;display:grid;place-items:center}
+.pal-produit-visuel img,.pal-produit-visuel svg{max-width:86%;max-height:86%}
+.pal-produit h3{font-size:1rem;margin:0 0 2px}
+.pal-produit .pal-petit{display:block}
+.pal-produit-bas{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.pal-prix{font:600 .95rem var(--display)}
+.pal-produit.est-bim{border-left:4px solid var(--chantier)}
+.pal-retour{padding:10px 12px;border-left:4px solid var(--trait-fort);background:var(--papier);font-size:.85rem;margin:10px 0 0}
+.pal-retour.is-pending{border-color:var(--chantier);background:#FFF6DC}
+.pal-retour.is-success{border-color:var(--conforme);background:var(--conforme-pale);color:#1C5A3D}
+.pal-retour.is-error{border-color:var(--alerte);background:var(--alerte-pale);color:var(--alerte)}
+
+.pal-vide{padding:16px;background:var(--papier);border:1px dashed var(--trait-fort);color:var(--encre-2);font-size:.86rem;margin-top:10px}
+.pal-liste{display:grid;gap:6px;margin-top:10px}
+.pal-ligne{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:10px 12px;background:var(--papier);border:1px solid var(--trait)}
+.pal-ligne b{font-weight:600}
+.pal-ligne .pal-petit{grid-column:1/-1;overflow-wrap:anywhere}
+.pal-qte{font:600 1.2rem var(--display);text-align:right;white-space:nowrap}
+.pal-qte small{font:400 .78rem var(--texte);color:var(--encre-3)}
+.pal-barre{grid-column:1/-1;height:6px;background:var(--beton)}
+.pal-barre span{display:block;height:100%;background:var(--plan)}
+.pal-total{display:flex;justify-content:space-between;align-items:baseline;padding:12px;background:var(--encre);color:#fff;margin-top:8px}
+.pal-total b{font:600 1.3rem var(--display)}
+.pal-total small{color:#B9C4D6}
+
+.pal-message{margin:0;padding:8px 14px;font-size:.82rem;color:var(--encre-3);min-height:2.2em;background:var(--papier);border-top:1px solid var(--trait);position:sticky;bottom:0}
+.pal-message.is-success{color:var(--conforme)}
+.pal-message.is-error{color:var(--alerte)}
+@media (max-width:340px){.pal-actions{grid-template-columns:1fr}}
