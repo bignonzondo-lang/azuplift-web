@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Connexion | AZUPLIFT</title>
+<link rel="stylesheet" href="/assets/app.css">
+<script src="/assets/app.js"></script>
+</head>
+<body>
+<div data-entete></div>
+<main id="contenu" class="auth">
+  <div class="auth-gauche">
+    <h1>Toute l'équipe sur les mêmes chantiers.</h1>
+    <p class="lead">Un compte par entreprise, un rôle par collaborateur. L'architecte place, le chef de chantier prépare, l'acheteur commande, la direction valide.</p>
+    <p class="small" style="margin-top:24px">Dans cette démonstration, essayez chaque profil pour voir la plateforme de son point de vue. Un devis demandé par l'acheteur arrive chez le fournisseur, qui y répond.</p>
+  </div>
+  <div class="auth-droite">
+    <div class="onglets" role="tablist">
+      <button role="tab" aria-selected="true" data-onglet="profils">Se connecter</button>
+      <button role="tab" aria-selected="false" data-onglet="creer">Créer un compte</button>
+    </div>
+    <section data-panneau="profils">
+      <p>Choisissez un profil de démonstration. Aucun mot de passe n'est nécessaire dans cette version.</p>
+      <div class="profils" data-profils></div>
+      <p class="small muted" data-deconnexion></p>
+    </section>
+    <section data-panneau="creer" hidden>
+      <form class="form" data-form-creer novalidate>
+        <label>Vous êtes
+          <select name="type"><option value="entreprise:Entreprise générale">Une entreprise du bâtiment</option><option value="entreprise:Cabinet d'architecture">Un cabinet d'architecture</option><option value="fournisseur:Distributeur">Un fournisseur ou fabricant</option></select>
+        </label>
+        <label>Raison sociale<input name="org" required autocomplete="organization"></label>
+        <div class="deux"><label>Ville<input name="ville" required value="Cotonou"></label><label>Numéro IFU<input name="ifu" inputmode="numeric" placeholder="13 chiffres"><span class="aide">Vérifié par notre équipe</span></label></div>
+        <div class="deux"><label>Votre nom<input name="nom" required autocomplete="name"></label><label>Courriel professionnel<input name="email" type="email" required autocomplete="email"></label></div>
+        <p class="message message-erreur" data-erreur hidden></p>
+        <button class="btn btn-chantier" type="submit">Créer le compte</button>
+        <p class="small muted" style="margin:0">Votre compte est utilisable tout de suite. L'équipe AZUPLIFT valide ensuite votre entreprise pour débloquer le paiement à 30 jours ou la publication de produits.</p>
+      </form>
+    </section>
+  </div>
+</main>
+<script>
+AZU.monter('connexion');
+const {$,$$,esc,Store}=AZU;
+const retour=AZU.params().get('retour')||'/espace';
+const sur=r=>/^\/[a-z]/i.test(r)?r:'/espace';
+function onglet(n){$$('[data-onglet]').forEach(b=>b.setAttribute('aria-selected',b.dataset.onglet===n));$$('[data-panneau]').forEach(p=>p.hidden=p.dataset.panneau!==n)}
+$$('[data-onglet]').forEach(b=>b.onclick=()=>onglet(b.dataset.onglet));
+if(AZU.params().get('creer'))onglet('creer');
+const s=Store.get();
+$('[data-profils]').innerHTML=s.users.map(u=>{const o=s.orgs.find(x=>x.id===u.org);return `<button class="profil" type="button" data-u="${u.id}"><span class="avatar">${AZU.initiales(u.nom)}</span><span><b>${esc(u.nom)}</b><small>${esc(AZU.ROLES[u.role])}, ${esc(o.nom)}</small></span></button>`}).join('');
+$$('[data-u]').forEach(b=>b.onclick=()=>{Store.login(b.dataset.u);location.href=sur(retour)});
+const cur=Store.user();
+if(cur){$('[data-deconnexion]').innerHTML=`Connecté en tant que ${esc(cur.nom)}. <a href="#" data-out>Se déconnecter</a>`;$('[data-out]').onclick=e=>{e.preventDefault();Store.logout();location.reload()}}
+$('[data-form-creer]').onsubmit=e=>{
+  e.preventDefault();const f=new FormData(e.target);const v=k=>String(f.get(k)||'').trim();
+  const err=$('[data-erreur]');
+  if(!v('org')||!v('nom')||!v('ville'))return err.hidden=false,err.textContent='Renseignez la raison sociale, la ville et votre nom.';
+  if(!/^\S+@\S+\.\S+$/.test(v('email')))return err.hidden=false,err.textContent='Saisissez un courriel valide, par exemple achats@entreprise.bj.';
+  if(v('ifu')&&!/^\d{13}$/.test(v('ifu')))return err.hidden=false,err.textContent='Le numéro IFU compte 13 chiffres.';
+  const [type,metier]=v('type').split(':');
+  const oid=AZU.uid('o-'),uid=AZU.uid('u-');
+  Store.update(st=>{st.orgs.push({id:oid,nom:v('org'),type,metier,ville:v('ville'),ifu:v('ifu'),statut:'en attente',creee:Date.now()});st.users.push({id:uid,nom:v('nom'),email:v('email'),org:oid,role:type==='fournisseur'?'fournisseur':'admin'});st.session=uid});
+  location.href='/espace?bienvenue=1';
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mon espace | AZUPLIFT</title>
+<link rel="stylesheet" href="/assets/app.css">
+<script src="/assets/app.js"></script>
+</head>
+<body>
+<div data-entete></div>
+<div class="espace" id="contenu"><nav class="espace-nav" data-nav aria-label="Mon espace"></nav><main class="espace-main" data-main></main></div>
+<script>
+AZU.monter('espace');
+const {$,$$,esc,fcfa,dateFr,Store,STATUTS_CMD,ROLES}=AZU;
+const u=Store.user();
+if(!u)location.replace('/connexion?retour=/espace');
+const ENT=['architecte','acheteur','chantier','admin'];
+const peutAcheter=()=>['acheteur','admin','architecte'].includes(u.role);
+const nomP=id=>{const p=AZU.produit(id);return p?p.nom:'Produit retiré'};
+const totalCmd=c=>c.lignes.reduce((n,l)=>n+l.q*l.prix,0)+(c.livraison||0);
+const badgeDevis=s=>({'envoyée':'<span class="badge badge-attente">En attente du fournisseur</span>','répondue':'<span class="badge badge-bim">Réponse reçue</span>','acceptée':'<span class="badge badge-ok">Acceptée</span>','refusée':'<span class="badge badge-alerte">Refusée</span>'}[s]);
+const suivi=n=>`<div class="suivi" aria-label="${STATUTS_CMD[n]}">${STATUTS_CMD.map((_,i)=>`<span class="${i<=n?'fait':''}"></span>`).join('')}</div><span class="small">${STATUTS_CMD[n]}</span>`;
+const vide=(t,p,a='')=>`<div class="vide"><h3>${t}</h3><p class="muted">${p}</p>${a}</div>`;
+
+function menus(){
+  if(ENT.includes(u.role))return [['apercu','Vue d’ensemble'],['projets','Projets'],['devis','Devis'],['commandes','Commandes'],['equipe','Équipe']];
+  if(u.role==='fournisseur')return [['apercu','Vue d’ensemble'],['devis','Demandes de devis'],['commandes','Commandes reçues'],['produits','Mes produits']];
+  return [['apercu','Vue d’ensemble'],['validations','Validations'],['commandes','Toutes les commandes'],['messages','Messages']];
+}
+function compteurs(s){
+  const c={};
+  if(ENT.includes(u.role)){c.devis=s.devis.filter(d=>d.org===u.org&&d.statut==='répondue').length}
+  else if(u.role==='fournisseur'){c.devis=s.devis.filter(d=>d.fournisseur===u.org&&d.statut==='envoyée').length;c.commandes=s.commandes.filter(x=>x.fournisseur===u.org&&x.statut<3).length}
+  else{c.validations=s.orgs.filter(o=>o.statut==='en attente').length+s.produitsFournisseurs.filter(p=>p.statut==='en attente').length;c.messages=s.messages.length}
+  return c;
+}
+function rendre(){
+  const s=Store.get();const o=Store.org(u.org);const vue=AZU.params().get('vue')||'apercu';
+  const c=compteurs(s);
+  $('[data-nav]').innerHTML=`<div class="org"><b>${esc(o.nom)}</b><small>${esc(u.nom)}, ${esc(ROLES[u.role])}</small>${o.statut==='en attente'?'<br><span class="badge badge-attente" style="margin-top:8px;display:inline-block">Validation en cours</span>':''}</div>`+
+    menus().map(([k,t])=>`<a href="?vue=${k}" ${vue===k?'aria-current="page"':''}>${t}${c[k]?`<span class="compteur">${c[k]}</span>`:''}</a>`).join('')+
+    `<a href="/connexion" style="margin-top:16px">Changer de profil</a>`;
+  const f=VUES[vue]||VUES.apercu;$('[data-main]').innerHTML=f(s,o);lier(s);
+}
+
+const VUES={
+apercu(s,o){
+  const bienvenue=AZU.params().get('bienvenue')?`<div class="message message-ok">Bienvenue sur AZUPLIFT. Votre compte ${esc(o.nom)} est créé. Notre équipe vérifie votre entreprise, vous pouvez déjà ${u.role==='fournisseur'?'proposer vos produits':'acheter et demander des devis'}.</div>`:'';
+  if(ENT.includes(u.role)){
+    const cmds=s.commandes.filter(x=>x.org===u.org),dev=s.devis.filter(x=>x.org===u.org);
+    const mois=cmds.filter(x=>new Date(x.creee).getMonth()===new Date().getMonth()).reduce((n,x)=>n+totalCmd(x),0);
+    const rep=dev.filter(d=>d.statut==='répondue');
+    return `${bienvenue}<h1>Bonjour ${esc(u.nom.split(' ')[0])}</h1><p class="muted">${esc(o.nom)}, ${esc(o.ville)}</p>
+    <div class="indicateurs"><div class="indicateur"><b>${cmds.filter(x=>x.statut<3).length}</b><span>Commandes en cours</span></div><div class="indicateur"><b>${rep.length}</b><span>Devis à examiner</span></div><div class="indicateur"><b>${s.projets.filter(p=>p.org===u.org).length}</b><span>Projets</span></div><div class="indicateur"><b>${(mois/1000).toLocaleString('fr-FR',{maximumFractionDigits:0})} k</b><span>FCFA HT commandés ce mois</span></div></div>
+    ${rep.length?`<div class="panneau"><div class="panneau-tete"><h2>Réponses de fournisseurs</h2><a href="?vue=devis">Tous les devis</a></div>${tableDevis(rep,s)}</div>`:''}
+    <div class="panneau"><div class="panneau-tete"><h2>Dernières commandes</h2><a href="?vue=commandes">Toutes les commandes</a></div>${cmds.length?tableCmd(cmds.slice(-4).reverse(),s):`<div class="panneau-corps">${vide('Aucune commande pour l’instant','Vos commandes apparaîtront ici avec leur suivi de livraison.','<a class="btn btn-chantier btn-sm" href="/catalogue">Parcourir le catalogue</a>')}</div>`}</div>`;
+  }
+  if(u.role==='fournisseur'){
+    const dev=s.devis.filter(d=>d.fournisseur===u.org),cmds=s.commandes.filter(x=>x.fournisseur===u.org);
+    const ca=cmds.reduce((n,x)=>n+totalCmd(x),0);
+    return `${bienvenue}<h1>Espace fournisseur</h1><p class="muted">${esc(o.nom)}, ${esc(o.ville)}</p>
+    <div class="indicateurs"><div class="indicateur"><b>${dev.filter(d=>d.statut==='envoyée').length}</b><span>Devis à traiter</span></div><div class="indicateur"><b>${cmds.filter(x=>x.statut<3).length}</b><span>Commandes à livrer</span></div><div class="indicateur"><b>${(ca/1000).toLocaleString('fr-FR',{maximumFractionDigits:0})} k</b><span>FCFA HT de ventes</span></div><div class="indicateur"><b>${AZU.catalogue().filter(p=>p.offres.some(x=>x.f===u.org)).length}</b><span>Produits en ligne</span></div></div>
+    <div class="panneau"><div class="panneau-tete"><h2>Demandes de devis récentes</h2><a href="?vue=devis">Toutes</a></div>${dev.length?tableDevisF(dev.slice(-4).reverse(),s):`<div class="panneau-corps">${vide('Aucune demande reçue','Les entreprises vous consultent depuis leur panier. Complétez vos fiches produits pour être trouvé.')}</div>`}</div>`;
+  }
+  const ent=s.orgs.filter(x=>x.type==='entreprise'),fou=s.orgs.filter(x=>x.type==='fournisseur');
+  return `<h1>Pilotage de la plateforme</h1><p class="muted">Vue de l'équipe AZUPLIFT</p>
+  <div class="indicateurs"><div class="indicateur"><b>${ent.length}</b><span>Entreprises</span></div><div class="indicateur"><b>${fou.length}</b><span>Fournisseurs</span></div><div class="indicateur"><b>${s.commandes.length}</b><span>Commandes</span></div><div class="indicateur"><b>${(s.commandes.reduce((n,x)=>n+totalCmd(x),0)/1000).toLocaleString('fr-FR',{maximumFractionDigits:0})} k</b><span>FCFA HT de volume</span></div></div>
+  <div class="panneau"><div class="panneau-tete"><h2>Dernières commandes</h2><a href="?vue=commandes">Toutes</a></div>${tableCmd(s.commandes.slice(-5).reverse(),s,true)}</div>`;
+},
+projets(s){
+  const ps=s.projets.filter(p=>p.org===u.org);
+  return `<div class="head-row" style="margin-bottom:20px"><h1 style="margin:0">Projets</h1><button class="btn btn-encre btn-sm" data-nouveau-projet>Nouveau projet</button></div>
+  <div class="message message-info">Depuis la palette AZUPLIFT dans Archicad, « Analyser le projet » puis « Envoyer les quantités au panier » transforme la maquette en panier, rattaché ici au moment de la commande.</div>
+  <form class="panneau form panneau-corps" data-form-projet hidden><div class="deux"><label>Nom du projet<input name="nom" required></label><label>Ville<input name="ville" required value="Cotonou"></label></div><button class="btn btn-chantier btn-sm" style="justify-self:start">Créer le projet</button></form>
+  ${ps.length?ps.map(p=>{const tot=p.lignes.reduce((n,l)=>{const x=AZU.produit(l.p);return n+(x?AZU.meilleurPrix(x)*l.q:0)},0);const nc=s.commandes.filter(c=>c.projet===p.id).length,nd=s.devis.filter(d=>d.projet===p.id).length;
+  return `<div class="panneau"><div class="panneau-tete"><div><h2>${esc(p.nom)}</h2><span class="small muted">${esc(p.ville)}, créé le ${dateFr(p.creee)}, ${esc(p.source)}, ${nc} ${nc>1?'commandes':'commande'}, ${nd} devis</span></div>${p.lignes.length?`<button class="btn btn-chantier btn-sm" data-vers-panier="${p.id}">Mettre au panier</button>`:''}</div>
+  ${p.lignes.length?`<div class="table-wrap"><table class="table"><thead><tr><th>Produit</th><th class="num">Quantité</th><th class="num">Estimation HT</th></tr></thead><tbody>${p.lignes.map(l=>{const x=AZU.produit(l.p);return `<tr><td>${esc(nomP(l.p))}</td><td class="num">${l.q.toLocaleString('fr-FR')} ${x?esc(x.unite):''}</td><td class="num">${x?fcfa(AZU.meilleurPrix(x)*l.q):''}</td></tr>`}).join('')}<tr><td><b>Total estimé au meilleur prix</b></td><td></td><td class="num"><b>${fcfa(tot)}</b></td></tr></tbody></table></div>`:`<div class="panneau-corps muted">Aucun quantitatif pour ce projet. Envoyez celui de la maquette depuis Archicad ou ajoutez des produits au panier.</div>`}</div>`}).join(''):vide('Aucun projet','Créez un projet pour regrouper devis et commandes d’un même chantier.')}`;
+},
+devis(s){
+  if(u.role==='fournisseur'){const d=s.devis.filter(x=>x.fournisseur===u.org).reverse();
+    return `<h1>Demandes de devis</h1><p class="muted">Répondez avec un prix ferme et un délai. L'entreprise accepte en un clic et la commande arrive dans vos commandes reçues.</p>${d.length?d.map(x=>carteDevisF(x,s)).join(''):vide('Aucune demande reçue','Les demandes des entreprises apparaîtront ici.')}`}
+  const d=s.devis.filter(x=>x.org===u.org).reverse();
+  return `<h1>Devis</h1><p class="muted">Vos demandes et les réponses des fournisseurs.</p>${d.length?d.map(x=>carteDevis(x,s)).join(''):vide('Aucune demande de devis','Depuis le panier, choisissez « Demander un devis » pour consulter les fournisseurs.','<a class="btn btn-chantier btn-sm" href="/catalogue">Parcourir le catalogue</a>')}`;
+},
+commandes(s){
+  const plat=u.role==='plateforme';
+  const l=(plat?s.commandes:u.role==='fournisseur'?s.commandes.filter(x=>x.fournisseur===u.org):s.commandes.filter(x=>x.org===u.org)).slice().reverse();
+  return `<h1>${u.role==='fournisseur'?'Commandes reçues':'Commandes'}</h1><p class="muted">${u.role==='fournisseur'?'Faites avancer chaque commande. L’acheteur voit le suivi en temps réel.':'Suivi de chaque commande, de la confirmation à la livraison sur chantier.'}</p>
+  ${l.length?l.map(c=>{const cl=Store.org(c.org),f=AZU.fournisseur(c.fournisseur),p=s.projets.find(x=>x.id===c.projet);
+  return `<div class="panneau"><div class="panneau-tete"><div><h2>${c.id}</h2><span class="small muted">${dateFr(c.creee)}, ${u.role==='fournisseur'?esc(cl.nom):esc(f.nom)}${p?`, ${esc(p.nom)}`:''}</span></div><div style="min-width:220px">${suivi(c.statut)}</div></div>
+  <div class="table-wrap"><table class="table"><tbody>${c.lignes.map(x=>`<tr><td>${esc(nomP(x.p))}</td><td class="num">${x.q.toLocaleString('fr-FR')}</td><td class="num">${fcfa(x.q*x.prix)}</td></tr>`).join('')}<tr><td>Livraison</td><td></td><td class="num">${c.livraison?fcfa(c.livraison):'Offerte'}</td></tr><tr><td><b>Total HT</b></td><td class="small muted">${esc(c.paiement)}, livré à ${esc(c.adresse)}</td><td class="num"><b>${fcfa(totalCmd(c))}</b></td></tr></tbody></table></div>
+  ${u.role==='fournisseur'&&c.statut<3?`<div class="panneau-corps" style="border-top:1px solid var(--trait)"><button class="btn btn-encre btn-sm" data-avancer="${c.id}">Marquer « ${STATUTS_CMD[c.statut+1]} »</button></div>`:''}</div>`}).join(''):vide('Aucune commande','Les commandes apparaîtront ici dès la première validation de panier.')}`;
+},
+equipe(s,o){
+  const m=s.users.filter(x=>x.org===u.org);const admin=u.role==='admin';
+  return `<h1>Équipe</h1><p class="muted">Chaque collaborateur a un rôle qui détermine ce qu'il peut faire.</p>
+  <div class="panneau"><div class="table-wrap"><table class="table"><thead><tr><th>Nom</th><th>Rôle</th><th>Courriel</th><th></th></tr></thead><tbody>${m.map(x=>`<tr><td><b>${esc(x.nom)}</b>${x.id===u.id?' <span class="small muted">vous</span>':''}</td><td>${esc(ROLES[x.role])}</td><td class="small">${esc(x.email)}</td><td>${x.id!==u.id?`<button class="btn btn-trait btn-sm" data-incarner="${x.id}">Voir avec ce profil</button>`:''}</td></tr>`).join('')}</tbody></table></div></div>
+  <div class="panneau"><div class="panneau-tete"><h2>Inviter un collaborateur</h2>${admin?'':'<span class="small muted">Réservé à l’administrateur de l’entreprise</span>'}</div><form class="panneau-corps form" data-form-invite><div class="deux"><label>Nom<input name="nom" required ${admin?'':'disabled'}></label><label>Courriel<input name="email" type="email" required ${admin?'':'disabled'}></label></div><label>Rôle<select name="role" ${admin?'':'disabled'}><option value="acheteur">Acheteur, commande et accepte les devis</option><option value="chantier">Chef de chantier, prépare paniers et devis</option><option value="architecte">Architecte, gère les projets et la maquette</option><option value="admin">Administrateur, gère l'équipe et les paiements</option></select></label><p data-msg-invite></p><button class="btn btn-chantier btn-sm" style="justify-self:start" ${admin?'':'disabled'}>Envoyer l'invitation</button></form></div>
+  <div class="panneau"><div class="panneau-tete"><h2>Ce que chaque rôle peut faire</h2></div><div class="table-wrap"><table class="table"><thead><tr><th></th><th>Acheteur</th><th>Chef de chantier</th><th>Architecte</th><th>Administrateur</th></tr></thead><tbody>
+  ${[['Parcourir et préparer un panier',1,1,1,1],['Demander un devis',1,1,1,1],['Commander et payer',1,0,1,1],['Accepter un devis',1,0,0,1],['Gérer les projets',1,1,1,1],['Inviter des collaborateurs',0,0,0,1]].map(r=>`<tr><td>${r[0]}</td>${r.slice(1).map(v=>`<td>${v?'<span class="badge badge-ok">Oui</span>':'<span class="muted small">Non</span>'}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+},
+produits(s,o){
+  const mes=AZU.catalogue().filter(p=>p.offres.some(x=>x.f===u.org));
+  const prop=s.produitsFournisseurs.filter(p=>p.fournisseur===u.org);
+  return `<h1>Mes produits</h1><p class="muted">Vos offres en ligne et les produits en cours de validation par l'équipe AZUPLIFT.</p>
+  <div class="panneau"><div class="panneau-tete"><h2>En ligne</h2><span class="small muted">${mes.length} ${mes.length>1?'produits':'produit'}</span></div>${mes.length?`<div class="table-wrap"><table class="table"><thead><tr><th>Produit</th><th>Univers</th><th class="num">Stock</th><th class="num">Votre prix HT</th></tr></thead><tbody>${mes.map(p=>{const x=p.offres.find(y=>y.f===u.org);return `<tr><td><a href="/produit?id=${encodeURIComponent(p.id)}">${esc(p.nom)}</a></td><td>${esc(AZU.univers(p.univers).nom)}</td><td class="num">${x.stock.toLocaleString('fr-FR')}</td><td class="num">${fcfa(x.prix)}</td></tr>`}).join('')}</tbody></table></div>`:'<div class="panneau-corps muted">Aucun produit en ligne pour l’instant.</div>'}</div>
+  ${prop.filter(p=>p.statut!=='publié').length?`<div class="panneau"><div class="panneau-tete"><h2>Proposés</h2></div><div class="table-wrap"><table class="table"><tbody>${prop.filter(p=>p.statut!=='publié').map(p=>`<tr><td>${esc(p.nom)}</td><td>${p.statut==='refusé'?'<span class="badge badge-alerte">Refusé</span>':'<span class="badge badge-attente">En validation</span>'}</td><td class="num">${fcfa(p.prix)}</td></tr>`).join('')}</tbody></table></div></div>`:''}
+  <div class="panneau"><div class="panneau-tete"><h2>Proposer un produit</h2></div><form class="panneau-corps form" data-form-produit>
+  <label>Désignation<input name="nom" required placeholder="Ciment CPJ 42,5 sac de 50 kg"></label>
+  <div class="deux"><label>Univers<select name="univers">${AZU.UNIVERS.map(x=>`<option value="${x.id}">${x.nom}</option>`).join('')}</select></label><label>Unité de vente<select name="unite"><option>U</option><option>m²</option><option>ml</option><option>kg</option></select></label></div>
+  <div class="deux"><label>Prix HT en FCFA<input name="prix" type="number" min="1" required></label><label>Stock disponible<input name="stock" type="number" min="0" required></label></div>
+  <label>Description<textarea name="desc" placeholder="Caractéristiques, usages, conditionnement"></textarea></label>
+  <p data-msg-produit></p>
+  <button class="btn btn-chantier btn-sm" style="justify-self:start">Envoyer en validation</button></form></div>`;
+},
+validations(s){
+  const os=s.orgs.filter(o=>o.statut==='en attente'),ps=s.produitsFournisseurs.filter(p=>p.statut==='en attente');
+  return `<h1>Validations</h1><p class="muted">Vérifiez les entreprises et les produits avant qu'ils ne soient visibles ou ne débloquent le paiement différé.</p>
+  <div class="panneau"><div class="panneau-tete"><h2>Entreprises à vérifier</h2></div>${os.length?`<div class="table-wrap"><table class="table"><thead><tr><th>Entreprise</th><th>Métier</th><th>IFU</th><th>Inscrite le</th><th></th></tr></thead><tbody>${os.map(o=>`<tr><td><b>${esc(o.nom)}</b><br><span class="small muted">${esc(o.ville)}</span></td><td>${esc(o.metier)}</td><td class="small">${esc(o.ifu||'Non fourni')}</td><td class="small">${dateFr(o.creee)}</td><td><button class="btn btn-encre btn-sm" data-valider-org="${o.id}">Valider</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="panneau-corps muted">Aucune entreprise en attente.</div>'}</div>
+  <div class="panneau"><div class="panneau-tete"><h2>Produits à publier</h2></div>${ps.length?`<div class="table-wrap"><table class="table"><thead><tr><th>Produit</th><th>Fournisseur</th><th class="num">Prix HT</th><th></th></tr></thead><tbody>${ps.map(p=>`<tr><td><b>${esc(p.nom)}</b><br><span class="small muted">${esc(AZU.univers(p.univers).nom)}, ${esc(p.unite)}</span></td><td>${esc(AZU.fournisseur(p.fournisseur).nom)}</td><td class="num">${fcfa(p.prix)}</td><td style="white-space:nowrap"><button class="btn btn-encre btn-sm" data-publier="${p.id}">Publier</button> <button class="btn btn-trait btn-sm" data-refuser="${p.id}">Refuser</button></td></tr>`).join('')}</tbody></table></div>`:'<div class="panneau-corps muted">Aucun produit en attente.</div>'}</div>`;
+},
+messages(s){
+  return `<h1>Messages</h1><p class="muted">Demandes reçues par le formulaire de contact.</p>${s.messages.length?`<div class="panneau"><div class="table-wrap"><table class="table"><thead><tr><th>De</th><th>Objet</th><th>Message</th><th>Reçu le</th></tr></thead><tbody>${s.messages.slice().reverse().map(m=>`<tr><td><b>${esc(m.nom)}</b><br><span class="small">${esc(m.email)}</span><br><span class="small muted">${esc(m.societe)}</span></td><td>${esc(m.objet)}</td><td class="small">${esc(m.message)}</td><td class="small">${dateFr(m.creee)}</td></tr>`).join('')}</tbody></table></div></div>`:vide('Aucun message','Les demandes envoyées depuis la page Contact arrivent ici.')}`;
+}
+};
+
+function tableCmd(l,s,plat){return `<div class="table-wrap"><table class="table"><thead><tr><th>Commande</th><th>${plat?'Client':'Fournisseur'}</th><th>Suivi</th><th class="num">Total HT</th></tr></thead><tbody>${l.map(c=>`<tr><td><b>${c.id}</b><br><span class="small muted">${dateFr(c.creee)}</span></td><td>${esc(plat?Store.org(c.org).nom:AZU.fournisseur(c.fournisseur).nom)}</td><td style="min-width:180px">${suivi(c.statut)}</td><td class="num">${fcfa(totalCmd(c))}</td></tr>`).join('')}</tbody></table></div>`}
+function tableDevis(l){return `<div class="table-wrap"><table class="table"><tbody>${l.map(d=>`<tr><td><b>${d.id}</b><br><span class="small muted">${esc(AZU.fournisseur(d.fournisseur).nom)}</span></td><td>${badgeDevis(d.statut)}</td><td class="num">${d.reponse?fcfa(d.reponse.total):''}</td><td><a href="?vue=devis">Examiner</a></td></tr>`).join('')}</tbody></table></div>`}
+function tableDevisF(l){return `<div class="table-wrap"><table class="table"><tbody>${l.map(d=>`<tr><td><b>${d.id}</b><br><span class="small muted">${esc(Store.org(d.org).nom)}, ${dateFr(d.creee)}</span></td><td>${badgeDevis(d.statut)}</td><td>${d.lignes.length} ${d.lignes.length>1?'lignes':'ligne'}</td><td><a href="?vue=devis">${d.statut==='envoyée'?'Répondre':'Voir'}</a></td></tr>`).join('')}</tbody></table></div>`}
+function lignesDevis(d,edit){
+  return `<div class="table-wrap"><table class="table"><thead><tr><th>Produit</th><th class="num">Quantité</th><th class="num">Prix catalogue HT</th>${edit||d.reponse?'<th class="num">Prix proposé HT</th>':''}</tr></thead><tbody>${d.lignes.map((l,i)=>{const p=AZU.produit(l.p);const off=p&&(p.offres.find(o=>o.f===d.fournisseur)||p.offres[0]);const cat=off?off.prix:0;
+  return `<tr><td>${esc(nomP(l.p))}</td><td class="num">${l.q.toLocaleString('fr-FR')} ${p?esc(p.unite):''}</td><td class="num">${fcfa(cat)}</td>${edit?`<td class="num"><input type="number" min="1" value="${Math.round(cat*(l.q>=100?.94:.97))}" data-px="${i}" style="width:110px;text-align:right;padding:6px;border:1px solid var(--trait-fort);border-radius:4px" aria-label="Prix proposé"></td>`:d.reponse?`<td class="num">${fcfa(d.reponse.prix[i])}</td>`:''}</tr>`}).join('')}</tbody></table></div>`;
+}
+function carteDevis(d,s){
+  const p=s.projets.find(x=>x.id===d.projet);
+  return `<div class="panneau"><div class="panneau-tete"><div><h2>${d.id}</h2><span class="small muted">${esc(AZU.fournisseur(d.fournisseur).nom)}, ${dateFr(d.creee)}${p?`, ${esc(p.nom)}`:''}</span></div>${badgeDevis(d.statut)}</div>${lignesDevis(d)}
+  ${d.reponse?`<div class="panneau-corps" style="border-top:1px solid var(--trait)"><p style="margin:0 0 6px"><b>Total proposé ${fcfa(d.reponse.total)} HT</b>, livraison ${esc(d.reponse.delai)}</p>${d.reponse.note?`<p class="small muted">${esc(d.reponse.note)}</p>`:''}
+  ${d.statut==='répondue'?(['acheteur','admin'].includes(u.role)?`<div class="btn-row"><button class="btn btn-chantier btn-sm" data-accepter="${d.id}">Accepter et commander</button><button class="btn btn-trait btn-sm" data-refuser-devis="${d.id}">Refuser</button></div>`:'<p class="small muted" style="margin:0">Un acheteur ou la direction peut accepter ce devis.</p>'):''}</div>`:''}</div>`;
+}
+function carteDevisF(d,s){
+  const cl=Store.org(d.org);
+  return `<div class="panneau"><div class="panneau-tete"><div><h2>${d.id}</h2><span class="small muted">${esc(cl.nom)}, ${dateFr(d.creee)}${d.adresse?`, livraison à ${esc(d.adresse)}`:''}</span></div>${badgeDevis(d.statut)}</div>${d.message?`<div class="panneau-corps" style="border-bottom:1px solid var(--trait)"><span class="small muted">Message du client</span><p style="margin:4px 0 0">${esc(d.message)}</p></div>`:''}${lignesDevis(d,d.statut==='envoyée')}
+  ${d.statut==='envoyée'?`<form class="panneau-corps form" data-repondre="${d.id}" style="border-top:1px solid var(--trait)"><div class="deux"><label>Délai de livraison<input name="delai" required value="5 jours ouvrés"></label><label>Validité de l'offre<select name="validite"><option>15 jours</option><option>30 jours</option></select></label></div><label>Note au client<input name="note" placeholder="Remise volume appliquée, livraison en deux fois possible"></label><button class="btn btn-chantier btn-sm" style="justify-self:start">Envoyer le devis</button></form>`:d.reponse?`<div class="panneau-corps" style="border-top:1px solid var(--trait)"><b>Total proposé ${fcfa(d.reponse.total)} HT</b>, livraison ${esc(d.reponse.delai)}</div>`:''}</div>`;
+}
+
+function lier(s){
+  $$('[data-incarner]').forEach(b=>b.onclick=()=>{Store.login(b.dataset.incarner);location.href='/espace'});
+  const np=$('[data-nouveau-projet]');if(np)np.onclick=()=>{$('[data-form-projet]').hidden=false;$('[data-form-projet] input').focus()};
+  const fp=$('[data-form-projet]');if(fp)fp.onsubmit=e=>{e.preventDefault();const f=new FormData(fp);if(!String(f.get('nom')).trim())return;Store.update(st=>st.projets.push({id:AZU.uid('PRJ'),org:u.org,nom:String(f.get('nom')).trim(),ville:String(f.get('ville')).trim(),lignes:[],source:'Créé dans l’espace',creee:Date.now()}));rendre();AZU.toast('Projet créé.')};
+  $$('[data-vers-panier]').forEach(b=>b.onclick=()=>{const p=Store.get().projets.find(x=>x.id===b.dataset.versPanier);p.lignes.forEach(l=>AZU.Cart.add(l.p,l.q));AZU.toast(`Quantitatif de ${esc(p.nom)} ajouté au panier. <a href="/panier">Voir le panier</a>`)});
+  $$('[data-repondre]').forEach(f=>f.onsubmit=e=>{e.preventDefault();const id=f.dataset.repondre;const px=$$('[data-px]',f.closest('.panneau')).map(i=>Math.max(1,parseInt(i.value)||1));const fd=new FormData(f);
+    Store.update(st=>{const d=st.devis.find(x=>x.id===id);d.reponse={prix:px,total:d.lignes.reduce((n,l,i)=>n+l.q*px[i],0),delai:String(fd.get('delai')),validite:String(fd.get('validite')),note:String(fd.get('note')||'')};d.statut='répondue'});rendre();AZU.toast(`Devis ${id} envoyé au client.`)});
+  $$('[data-accepter]').forEach(b=>b.onclick=()=>{const id=b.dataset.accepter;let cid;Store.update(st=>{const d=st.devis.find(x=>x.id===id);d.statut='acceptée';cid=AZU.uid('CMD');st.commandes.push({id:cid,org:d.org,user:u.id,fournisseur:d.fournisseur,projet:d.projet,lignes:d.lignes.map((l,i)=>({p:l.p,q:l.q,prix:d.reponse.prix[i]})),livraison:0,adresse:d.adresse||'Adresse du chantier',paiement:Store.org(d.org).paiement30?'Paiement à 30 jours':'Virement bancaire',statut:0,creee:Date.now(),devis:id})});rendre();AZU.toast(`Devis accepté, commande ${cid} créée. <a href="?vue=commandes">Suivre</a>`)});
+  $$('[data-refuser-devis]').forEach(b=>b.onclick=()=>{Store.update(st=>{st.devis.find(x=>x.id===b.dataset.refuserDevis).statut='refusée'});rendre()});
+  $$('[data-avancer]').forEach(b=>b.onclick=()=>{Store.update(st=>{const c=st.commandes.find(x=>x.id===b.dataset.avancer);c.statut=Math.min(3,c.statut+1)});rendre()});
+  const fi=$('[data-form-invite]');if(fi)fi.onsubmit=e=>{e.preventDefault();const f=new FormData(fi);const nom=String(f.get('nom')||'').trim(),email=String(f.get('email')||'').trim();const m=$('[data-msg-invite]');
+    if(!nom||!/^\S+@\S+\.\S+$/.test(email)){m.className='message message-erreur';m.textContent='Indiquez un nom et un courriel valide.';return}
+    Store.update(st=>st.users.push({id:AZU.uid('u-'),nom,email,org:u.org,role:String(f.get('role'))}));rendre();AZU.toast(`${esc(nom)} a rejoint l’équipe. En production, une invitation lui serait envoyée par courriel.`,5000)};
+  const fpr=$('[data-form-produit]');if(fpr)fpr.onsubmit=e=>{e.preventDefault();const f=new FormData(fpr);const nom=String(f.get('nom')||'').trim(),prix=parseInt(f.get('prix')),stock=parseInt(f.get('stock'));const m=$('[data-msg-produit]');
+    if(!nom||!(prix>0)||!(stock>=0)){m.className='message message-erreur';m.textContent='Renseignez la désignation, un prix et un stock.';return}
+    Store.update(st=>st.produitsFournisseurs.push({id:AZU.uid('PF-'),nom,univers:String(f.get('univers')),unite:String(f.get('unite')),prix,stock,desc:String(f.get('desc')||'').trim()||`Proposé par ${Store.org(u.org).nom}.`,fournisseur:u.org,statut:'en attente',creee:Date.now()}));rendre();AZU.toast('Produit envoyé en validation. Il sera visible au catalogue dès sa publication.',5000)};
+  $$('[data-valider-org]').forEach(b=>b.onclick=()=>{Store.update(st=>{const o=st.orgs.find(x=>x.id===b.dataset.validerOrg);o.statut='validée';if(o.type==='entreprise')o.paiement30=true});rendre();AZU.toast('Entreprise validée.')});
+  $$('[data-publier]').forEach(b=>b.onclick=()=>{Store.update(st=>{st.produitsFournisseurs.find(x=>x.id===b.dataset.publier).statut='publié'});rendre();AZU.toast('Produit publié au catalogue. <a href="/catalogue">Voir</a>')});
+  $$('[data-refuser]').forEach(b=>b.onclick=()=>{Store.update(st=>{st.produitsFournisseurs.find(x=>x.id===b.dataset.refuser).statut='refusé'});rendre()});
+}
+if(u)rendre();
+</script>
+</body>
+</html>

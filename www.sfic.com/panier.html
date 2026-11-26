@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Panier | AZUPLIFT</title>
+<link rel="stylesheet" href="/assets/app.css">
+<script src="/assets/app.js"></script>
+</head>
+<body>
+<div data-entete></div>
+<main id="contenu" class="wrap" data-page></main>
+<div data-pied></div>
+<script>
+AZU.monter('panier');
+const {$,$$,esc,fcfa,Store,Cart}=AZU;
+const TVA=.18,FRANCO=1000000,PORT=10000;
+let etape=1,mode=AZU.params().get('mode')==='devis'?'devis':'commande',choix={};
+
+function groupes(){const g={};Cart.lignes().forEach((l,i)=>{(g[l.f]=g[l.f]||[]).push({...l,i})});return g}
+function calc(){const g=groupes();let ht=0,port=0;Object.values(g).forEach(ls=>{const s=ls.reduce((n,l)=>n+l.q*l.prix,0);ht+=s;port+=s>=FRANCO?0:PORT});return{ht,port,tva:(ht+port)*TVA,ttc:(ht+port)*(1+TVA),envois:Object.keys(g).length}}
+
+function recap(){
+  const c=calc();
+  if(mode==='devis')return `<aside class="recap"><h2 style="font-size:1.3rem">Demande de devis</h2><p class="muted">Chaque fournisseur reçoit sa partie du panier et vous répond avec un prix ferme et un délai.</p><dl><dt>Fournisseurs consultés</dt><dd>${c.envois}</dd><dt>Estimation au prix catalogue</dt><dd>${fcfa(c.ht)} HT</dd></dl>${bouton()}</aside>`;
+  return `<aside class="recap"><h2 style="font-size:1.3rem">Récapitulatif</h2><dl><dt>Produits HT</dt><dd>${fcfa(c.ht)}</dd><dt>Livraison HT, ${c.envois} ${c.envois>1?'envois':'envoi'}</dt><dd>${c.port?fcfa(c.port):'Offerte'}</dd><dt>TVA 18 %</dt><dd>${fcfa(c.tva)}</dd><dt class="total">Total TTC</dt><dd class="total">${fcfa(c.ttc)}</dd></dl>${bouton()}<p class="small muted" style="margin:14px 0 0">Livraison offerte dès ${fcfa(FRANCO)} HT par fournisseur.</p></aside>`;
+}
+function bouton(){
+  const t={1:mode==='devis'?'Continuer vers le chantier':'Continuer vers la livraison',2:mode==='devis'?'Envoyer la demande de devis':'Continuer vers le paiement',3:'Confirmer et payer'}[etape];
+  return `<button class="btn btn-chantier" style="width:100%" type="button" data-suivant>${t}</button>`;
+}
+function bandeau(){
+  const n=mode==='devis'?['Panier','Chantier et message','Envoi']:['Panier','Livraison','Paiement','Confirmation'];
+  return `<div class="etapes-achat">${n.map((x,i)=>`<span class="${i+1===etape?'actif':i+1<etape?'fait':''}">${i+1}. ${x}</span>`).join('')}</div>`;
+}
+
+function vueVide(){return `<div class="vide" style="margin:56px 0"><h1 style="font-size:2rem">Votre panier est vide</h1><p class="muted">Ajoutez des produits depuis le catalogue ou envoyez le quantitatif de votre maquette depuis la palette Archicad.</p><a class="btn btn-chantier" href="/catalogue">Parcourir le catalogue</a></div>`}
+
+function vuePanier(){
+  const g=groupes();
+  return Object.entries(g).map(([f,ls])=>{const fo=AZU.fournisseur(f);const s=ls.reduce((n,l)=>n+l.q*l.prix,0);return `<section class="panneau"><div class="panneau-tete"><h2>${esc(fo.nom)}</h2><span class="small muted">${esc(fo.ville)}, livraison ${esc(fo.delai||'à confirmer')}</span></div>
+  ${ls.map(l=>`<div class="ligne"><div class="ligne-visuel">${AZU.visuel(l.p)}</div><div><a href="/produit?id=${encodeURIComponent(l.p.id)}"><b>${esc(l.p.nom)}</b></a><div class="small muted">${fcfa(l.prix)} HT par ${esc(l.p.unite)}${l.source==='Archicad'?' <span class="badge badge-archicad">Quantité Archicad</span>':''}</div><button class="small" style="background:none;border:0;padding:6px 0;color:var(--alerte);cursor:pointer" data-suppr="${l.i}">Retirer</button></div><div style="text-align:right"><div class="qte" style="margin-left:auto"><button type="button" data-m="${l.i}" aria-label="Diminuer">−</button><input type="number" min="1" value="${l.q}" data-qi="${l.i}" aria-label="Quantité"><button type="button" data-p="${l.i}" aria-label="Augmenter">+</button></div><b style="display:block;margin-top:8px">${fcfa(l.q*l.prix)}</b></div></div>`).join('')}
+  <div class="ligne" style="grid-template-columns:1fr auto"><span class="muted small">${s>=FRANCO?'Livraison offerte pour ce fournisseur':`Livraison ${fcfa(PORT)} HT, offerte dès ${fcfa(FRANCO)}`}</span><b>${fcfa(s)} HT</b></div></section>`}).join('')+
+  `<div class="choix" style="grid-template-columns:1fr 1fr;margin-top:8px">
+    <label><input type="radio" name="mode" value="commande" ${mode==='commande'?'checked':''}><span><b>Commander maintenant</b><span class="small muted">Aux prix affichés, paiement en ligne ou à 30 jours.</span></span></label>
+    <label><input type="radio" name="mode" value="devis" ${mode==='devis'?'checked':''}><span><b>Demander un devis</b><span class="small muted">Les fournisseurs vous répondent avec un prix ferme.</span></span></label>
+  </div>`;
+}
+
+function exigeCompte(){
+  const u=Store.user();
+  if(!u)return `<div class="message message-info">Connectez vous pour ${mode==='devis'?'envoyer une demande de devis':'commander'}. Votre panier est conservé. <a href="/connexion?retour=/panier${mode==='devis'?'%3Fmode%3Ddevis':''}">Se connecter</a></div>`;
+  if(!['acheteur','admin','architecte','chantier'].includes(u.role))return `<div class="message message-erreur">Le profil ${esc(AZU.ROLES[u.role])} ne peut pas acheter. Connectez vous avec un compte entreprise.</div>`;
+  if(u.role==='chantier'&&mode==='commande')return `<div class="message message-erreur">Un chef de chantier peut préparer un panier et demander un devis. La commande est validée par un acheteur ou la direction.</div>`;
+  return '';
+}
+
+function vueLivraison(){
+  const u=Store.user(),s=Store.get();
+  const projets=s.projets.filter(p=>p.org===u.org);
+  return `<section class="panneau"><div class="panneau-tete"><h2>${mode==='devis'?'Chantier concerné':'Livraison'}</h2></div><div class="panneau-corps form">
+    <label>Projet<select data-projet>${projets.map(p=>`<option value="${p.id}">${esc(p.nom)}, ${esc(p.ville)}</option>`).join('')}<option value="">Nouveau projet</option></select></label>
+    <label data-nouveau hidden>Nom du nouveau projet<input data-nom-projet placeholder="Immeuble de bureaux, lot cloisons"></label>
+    <label>Adresse de livraison<input data-adresse required placeholder="Quartier, rue, repère"></label>
+    <div class="deux"><label>Ville<input data-ville required value="Cotonou"></label><label>Contact sur place<input data-contact required placeholder="Nom et téléphone"></label></div>
+    ${mode==='devis'?'<label>Message aux fournisseurs<textarea data-message placeholder="Délais souhaités, conditionnement, accès au chantier"></textarea></label>':'<label>Créneau souhaité<select data-creneau><option>Dès que possible</option><option>Matin, 7 h à 12 h</option><option>Après midi, 13 h à 17 h</option></select></label>'}
+    <p data-erreur class="message message-erreur" hidden></p>
+  </div></section>`;
+}
+
+function vuePaiement(){
+  const u=Store.user(),o=Store.org(u.org);
+  return `<section class="panneau"><div class="panneau-tete"><h2>Paiement</h2><span class="badge badge-attente">Simulé</span></div><div class="panneau-corps">
+  <div class="choix">
+    <label><input type="radio" name="pay" value="Paiement mobile" checked><span><b>Paiement mobile</b><span class="small muted">Validation sur votre téléphone. En démonstration, aucun numéro n'est demandé.</span></span></label>
+    <label><input type="radio" name="pay" value="Carte bancaire"><span><b>Carte bancaire</b><span class="small muted">Paiement sécurisé chez le prestataire. Aucune carte n'est demandée ici.</span></span></label>
+    <label><input type="radio" name="pay" value="Virement bancaire"><span><b>Virement bancaire</b><span class="small muted">La commande part à réception des fonds.</span></span></label>
+    <label style="${o.paiement30?'':'opacity:.5'}"><input type="radio" name="pay" value="Paiement à 30 jours" ${o.paiement30?'':'disabled'}><span><b>Paiement à 30 jours</b><span class="small muted">${o.paiement30?'Votre entreprise est approuvée pour ce mode.':'Réservé aux entreprises approuvées par AZUPLIFT.'}</span></span></label>
+  </div>
+  <p class="small muted" style="margin:16px 0 0">Aucune transaction réelle n'est effectuée dans cette version.</p></div></section>`;
+}
+
+function rendre(){
+  const page=$('[data-page]');
+  if(!Cart.lignes().length&&etape<4){page.innerHTML=vueVide();return}
+  if(etape===4){return}
+  const garde=etape>1?exigeCompte():'';
+  const corps=etape===1?vuePanier():garde?garde:etape===2?vueLivraison():vuePaiement();
+  page.innerHTML=`<h1 style="font-size:clamp(2rem,4vw,2.8rem);margin-top:36px">${mode==='devis'?'Demande de devis':'Panier'}</h1>${bandeau()}<div class="panier" style="padding-top:0"><div>${corps}</div>${recap()}</div>`;
+  if(garde)$('[data-suivant]').disabled=true;
+  if(etape===2&&!garde){Object.entries(choix).forEach(([k,v])=>{const el=$(`[data-${k}]`);if(el)el.value=v});
+    const sel=$('[data-projet]');const t=()=>{$('[data-nouveau]').hidden=!!sel.value};sel.onchange=t;t();}
+  lier();
+}
+function lier(){
+  $$('[data-suppr]').forEach(b=>b.onclick=()=>{Cart.remove(+b.dataset.suppr);rendre()});
+  $$('[data-m]').forEach(b=>b.onclick=()=>{const l=Cart.read().items[b.dataset.m];Cart.setQ(+b.dataset.m,(parseInt(l.quantity)||1)-1);rendre()});
+  $$('[data-p]').forEach(b=>b.onclick=()=>{const l=Cart.read().items[b.dataset.p];Cart.setQ(+b.dataset.p,(parseInt(l.quantity)||1)+1);rendre()});
+  $$('[data-qi]').forEach(i=>i.onchange=()=>{Cart.setQ(+i.dataset.qi,parseInt(i.value)||1);rendre()});
+  $$('input[name=mode]').forEach(r=>r.onchange=()=>{mode=r.value;rendre()});
+  const s=$('[data-suivant]');if(s)s.onclick=suivant;
+}
+function lireLivraison(){
+  const v=k=>{const e=$(`[data-${k}]`);return e?e.value.trim():''};
+  choix={projet:v('projet'),'nom-projet':v('nom-projet'),adresse:v('adresse'),ville:v('ville'),contact:v('contact'),message:v('message'),creneau:v('creneau')};
+  const err=!choix.adresse||!choix.ville||!choix.contact?'Renseignez l’adresse, la ville et le contact sur place.':(!choix.projet&&!choix['nom-projet'])?'Donnez un nom au nouveau projet.':'';
+  if(err){const e=$('[data-erreur]');e.textContent=err;e.hidden=false;return false}
+  return true;
+}
+function projetId(s,u){
+  if(choix.projet)return choix.projet;
+  const id=AZU.uid('PRJ');s.projets.push({id,org:u.org,nom:choix['nom-projet'],ville:choix.ville,lignes:[],source:'Créé au panier',creee:Date.now()});choix.projet=id;return id;
+}
+function suivant(){
+  if(etape===1){if(!Cart.lignes().length)return;etape=2;rendre();scrollTo(0,0);return}
+  if(etape===2){if(!lireLivraison())return;if(mode==='devis')return envoyerDevis();etape=3;rendre();scrollTo(0,0);return}
+  if(etape===3)return payer();
+}
+function envoyerDevis(){
+  const u=Store.user();const g=groupes();const ids=[];
+  Store.update(s=>{const pid=projetId(s,u);Object.entries(g).forEach(([f,ls])=>{const id=AZU.uid('DEV');ids.push(id);s.devis.push({id,org:u.org,user:u.id,fournisseur:f,projet:pid,lignes:ls.map(l=>({p:l.p.id,q:l.q})),message:choix.message,adresse:`${choix.adresse}, ${choix.ville}`,statut:'envoyée',creee:Date.now()})})});
+  Cart.clear();etape=4;
+  $('[data-page]').innerHTML=`<div class="vide" style="margin:56px 0;text-align:left;border-style:solid"><span class="badge badge-ok">Demande envoyée</span><h1 style="font-size:2rem;margin-top:12px">${ids.length>1?`${ids.length} demandes de devis envoyées`:'Demande de devis envoyée'}</h1><p>Références ${ids.join(', ')}. Les fournisseurs répondent dans votre espace, rubrique Devis. Pour voir la réponse côté fournisseur, connectez vous avec le profil Commercial démo.</p><div class="btn-row"><a class="btn btn-encre" href="/espace?vue=devis">Suivre mes devis</a><a class="btn btn-trait" href="/connexion">Changer de profil</a></div></div>`;
+}
+function payer(){
+  const u=Store.user();const g=groupes();const pay=$('input[name=pay]:checked').value;const ids=[];
+  Store.update(s=>{const pid=projetId(s,u);Object.entries(g).forEach(([f,ls])=>{const ht=ls.reduce((n,l)=>n+l.q*l.prix,0);const id=AZU.uid('CMD');ids.push(id);
+    s.commandes.push({id,org:u.org,user:u.id,fournisseur:f,projet:pid,lignes:ls.map(l=>({p:l.p.id,q:l.q,prix:l.prix})),livraison:ht>=FRANCO?0:PORT,adresse:`${choix.adresse}, ${choix.ville}`,contact:choix.contact,creneau:choix.creneau,paiement:pay,statut:0,creee:Date.now()})})});
+  const c=calc();Cart.clear();etape=4;
+  $('[data-page]').innerHTML=`${bandeau()}<div class="vide" style="margin:0 0 56px;text-align:left;border-style:solid"><span class="badge badge-ok">Commande confirmée</span><h1 style="font-size:2rem;margin-top:12px">Merci, votre commande est transmise</h1><p>${ids.length>1?`${ids.length} commandes, une par fournisseur`:'Commande'} ${ids.join(', ')} pour ${fcfa(c.ttc)} TTC, réglée par ${esc(pay.toLowerCase())}. Paiement simulé, aucune transaction réelle.</p><p class="muted">Le fournisseur prépare la commande depuis son espace. Vous suivez chaque étape jusqu'à la livraison sur le chantier.</p><div class="btn-row"><a class="btn btn-encre" href="/espace?vue=commandes">Suivre mes commandes</a><a class="btn btn-trait" href="/catalogue">Continuer mes achats</a></div></div>`;
+}
+rendre();
+</script>
+</body>
+</html>

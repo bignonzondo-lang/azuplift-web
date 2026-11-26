@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Catalogue | AZUPLIFT</title>
+<link rel="stylesheet" href="/assets/app.css">
+<script src="/assets/app.js"></script>
+</head>
+<body>
+<div data-entete></div>
+<main id="contenu" class="wrap" style="padding:40px 0 80px">
+  <h1 style="font-size:clamp(2rem,4vw,3rem)">Catalogue</h1>
+  <p class="lead">Matériaux et objets BIM proposés par les fournisseurs de la plateforme. Prix hors taxes, offres comparées par fournisseur.</p>
+  <form class="recherche" data-recherche role="search">
+    <label class="sr" for="q">Rechercher un produit</label>
+    <input id="q" name="q" type="search" placeholder="Plaque hydrofuge, membrane, fauteuil…" autocomplete="off">
+    <button class="btn btn-encre" type="submit">Rechercher</button>
+  </form>
+  <div class="cat-layout">
+    <aside class="filtres" aria-label="Filtres">
+      <h2>Affiner</h2>
+      <fieldset><legend>Univers</legend><div data-f-univers></div></fieldset>
+      <fieldset><legend>Objet BIM</legend>
+        <label><input type="checkbox" data-f-bim> Fichiers BIM disponibles</label>
+        <label><input type="checkbox" data-f-archicad> Placement Archicad vérifié</label>
+      </fieldset>
+      <fieldset><legend>Disponible chez</legend><div data-f-fourn></div></fieldset>
+      <button class="btn btn-trait btn-sm" type="button" data-f-effacer>Effacer les filtres</button>
+    </aside>
+    <section aria-live="polite">
+      <div class="resultats-info"><span data-nb></span>
+        <label class="small">Trier par <select data-tri><option value="pertinence">Pertinence</option><option value="prix-asc">Prix croissant</option><option value="prix-desc">Prix décroissant</option><option value="nom">Nom</option></select></label>
+      </div>
+      <div class="grille" data-grille></div>
+    </section>
+  </div>
+</main>
+<div data-pied></div>
+<script>
+AZU.monter('catalogue');
+const {$,$$,esc}=AZU;
+const p0=AZU.params();
+$('[data-f-univers]').innerHTML=AZU.UNIVERS.map(u=>`<label><input type="checkbox" value="${u.id}" ${p0.getAll('univers').includes(u.id)?'checked':''}> ${u.nom}</label>`).join('');
+$('[data-f-fourn]').innerHTML=AZU.FOURNISSEURS.map(f=>`<label><input type="checkbox" value="${f.id}"> ${esc(f.ville)}</label>`).join('');
+$('#q').value=p0.get('q')||'';
+const norm=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+function rendre(){
+  const q=norm($('#q').value.trim());
+  const us=$$('[data-f-univers] input:checked').map(i=>i.value);
+  const fs=$$('[data-f-fourn] input:checked').map(i=>i.value);
+  const bim=$('[data-f-bim]').checked,arc=$('[data-f-archicad]').checked;
+  let l=AZU.catalogue().filter(p=>
+    (!q||norm([p.nom,p.desc,p.fabricant||'',AZU.univers(p.univers).nom].join(' ')).includes(q))&&
+    (!us.length||us.includes(p.univers))&&(!fs.length||p.offres.some(o=>fs.includes(o.f)))&&
+    (!bim||p.bim.length)&&(!arc||p.archicad));
+  const t=$('[data-tri]').value;
+  if(t==='prix-asc')l.sort((a,b)=>AZU.meilleurPrix(a)-AZU.meilleurPrix(b));
+  if(t==='prix-desc')l.sort((a,b)=>AZU.meilleurPrix(b)-AZU.meilleurPrix(a));
+  if(t==='nom')l.sort((a,b)=>a.nom.localeCompare(b.nom,'fr'));
+  $('[data-nb]').textContent=`${l.length} ${l.length>1?'produits':'produit'}`;
+  $('[data-grille]').innerHTML=l.length?l.map(AZU.carte).join(''):`<div class="vide" style="grid-column:1/-1"><h3>Aucun produit ne correspond</h3><p class="muted">Retirez un filtre ou essayez un terme plus général, par exemple plaque ou isolant.</p><button class="btn btn-trait btn-sm" type="button" onclick="document.querySelector('[data-f-effacer]').click()">Effacer les filtres</button></div>`;
+}
+$$('.filtres input, [data-tri]').forEach(i=>i.addEventListener('change',rendre));
+$('#q').addEventListener('input',rendre);
+$('[data-recherche]').addEventListener('submit',e=>{e.preventDefault();rendre()});
+$('[data-f-effacer]').addEventListener('click',()=>{$$('.filtres input').forEach(i=>i.checked=false);$('#q').value='';rendre()});
+rendre();
+</script>
+</body>
+</html>

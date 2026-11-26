@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contact | AZUPLIFT</title>
+<link rel="stylesheet" href="/assets/app.css">
+<script src="/assets/app.js"></script>
+</head>
+<body>
+<div data-entete></div>
+<main id="contenu" class="section"><div class="wrap" style="display:grid;grid-template-columns:1fr minmax(0,560px);gap:64px" id="rendezvous">
+  <div>
+    <h1 style="font-size:clamp(2.2rem,4.5vw,3.4rem)">Parlons de vos chantiers.</h1>
+    <p class="lead">Une présentation de 30 minutes, en visioconférence ou dans vos bureaux à Cotonou, avec la palette Archicad en direct.</p>
+    <p class="muted">Fournisseur, entreprise, cabinet d'architecture ou investisseur, dites nous ce que vous cherchez. Nous répondons sous un jour ouvré.</p>
+  </div>
+  <form class="panneau panneau-corps form" data-contact novalidate>
+    <div class="deux"><label>Nom<input name="nom" required autocomplete="name"></label><label>Société<input name="societe" autocomplete="organization"></label></div>
+    <label>Courriel<input name="email" type="email" required autocomplete="email"></label>
+    <label>Objet<select name="objet"><option>Présentation de la plateforme</option><option>Extension Archicad</option><option>Devenir fournisseur</option><option>Partenariat ou investissement</option><option>Autre demande</option></select></label>
+    <label>Message<textarea name="message" required></textarea></label>
+    <p data-msg></p>
+    <button class="btn btn-chantier" style="justify-self:start">Envoyer le message</button>
+  </form>
+</div></main>
+<div data-pied></div>
+<script>
+AZU.monter('contact');
+const f=AZU.$('[data-contact]');
+f.onsubmit=e=>{e.preventDefault();const d=Object.fromEntries(new FormData(f));const m=AZU.$('[data-msg]');
+  if(!d.nom.trim()||!/^\S+@\S+\.\S+$/.test(d.email)||!d.message.trim()){m.className='message message-erreur';m.textContent='Indiquez votre nom, un courriel valide et votre message.';return}
+  AZU.Store.update(s=>s.messages.push({...d,creee:Date.now()}));f.reset();m.className='message message-ok';m.textContent='Message envoyé. En démonstration, il apparaît dans l’espace Équipe AZUPLIFT, rubrique Messages.'};
+if(matchMedia('(max-width:900px)').matches)AZU.$('#rendezvous').style.gridTemplateColumns='1fr';
+</script>
+</body>
+</html>

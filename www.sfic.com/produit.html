@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Produit | AZUPLIFT</title>
+<link rel="stylesheet" href="/assets/app.css">
+<script src="/assets/app.js"></script>
+</head>
+<body>
+<div data-entete></div>
+<main id="contenu" class="wrap" data-page></main>
+<div data-pied></div>
+<script>
+AZU.monter('catalogue');
+const {$,$$,esc,fcfa}=AZU;
+const p=AZU.produit(AZU.params().get('id')||AZU.ASTRID_ID);
+const page=$('[data-page]');
+if(!p){
+  page.innerHTML=`<div class="vide" style="margin:60px 0"><h1 style="font-size:2rem">Ce produit n'est plus au catalogue</h1><p class="muted">Il a peut être été retiré par son fournisseur.</p><a class="btn btn-encre" href="/catalogue">Retour au catalogue</a></div>`;
+}else{
+  document.title=`${p.nom} | AZUPLIFT`;
+  const u=AZU.univers(p.univers);
+  const offres=p.offres.slice().sort((a,b)=>a.prix-b.prix);
+  const cotes=p.dims?`<svg class="cotes" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><g stroke="#B3261E" stroke-width=".25" fill="none"><path d="M18 90 H82 M18 88 V92 M82 88 V92"/><path d="M8 18 V82 M6 18 H10 M6 82 H10"/></g></svg><span style="position:absolute;bottom:4%;left:50%;transform:translateX(-50%);font:500 .85rem var(--display);color:#B3261E">${p.dims[0]} mm</span><span style="position:absolute;left:1%;top:50%;transform:rotate(-90deg);font:500 .85rem var(--display);color:#B3261E">${p.dims[2]} mm</span>`:'';
+  page.innerHTML=`
+  <nav class="fil" aria-label="Fil d'Ariane"><a href="/catalogue">Catalogue</a> / <a href="/catalogue?univers=${u.id}">${esc(u.nom)}</a> / ${esc(p.nom)}</nav>
+  <div class="produit">
+    <div>
+      <div class="produit-visuel">${AZU.visuel(p)}${cotes}</div>
+      ${p.archicad?`<div class="panneau" style="margin-top:24px"><div class="panneau-tete"><h2>Placer dans Archicad</h2><span class="badge badge-archicad">Vérifié</span></div><div class="panneau-corps"><p>Ouvrez la palette AZUPLIFT dans Archicad 29, cherchez ce produit et cliquez sur « Ajouter à Archicad ». Archicad vous demande un point sur le plan, puis crée l'objet avec son identifiant produit.</p><p class="small muted" style="margin:0">Référence lue par l'extension ${esc(p.id)}</p></div></div>`:''}
+    </div>
+    <div>
+      <p class="fiche-cat" style="margin:0">${esc(u.nom)}${p.fabricant?`, ${esc(p.fabricant)}`:''}</p>
+      <h1 style="font-size:clamp(2rem,4vw,3rem);margin-top:6px">${esc(p.nom)}</h1>
+      <div class="badges">${p.archicad?'<span class="badge badge-archicad">Placement Archicad</span>':''}${p.bim.length?`<span class="badge badge-bim">${p.bim.length} formats BIM</span>`:'<span class="badge">Objet BIM en préparation</span>'}${p.nouveau?'<span class="badge badge-ok">Nouveau fournisseur</span>':''}</div>
+      <p style="margin-top:18px">${esc(p.desc)}</p>
+      <div class="achat">
+        <div class="table-wrap"><table class="offres"><thead><tr><th></th><th>Fournisseur</th><th>Délai</th><th>Stock</th><th class="num">Prix HT</th></tr></thead><tbody>
+        ${offres.map((o,i)=>{const f=AZU.fournisseur(o.f);return `<tr><td><input type="radio" name="offre" value="${o.f}" ${i===0?'checked':''} aria-label="Choisir ${esc(f.nom)}"></td><td><b>${esc(f.nom)}</b><br><span class="small muted">${esc(f.ville)}</span></td><td class="small">${esc(f.delai||'À confirmer')}</td><td class="small">${o.stock.toLocaleString('fr-FR')}</td><td class="num"><b>${fcfa(o.prix)}</b></td></tr>`}).join('')}
+        </tbody></table></div>
+        <div style="display:flex;align-items:end;justify-content:space-between;gap:16px;margin:20px 0 16px;flex-wrap:wrap">
+          <div><span class="small muted">Prix unitaire HT, par ${esc(p.unite)}</span><div class="prix" data-prix>${fcfa(offres[0].prix)}</div></div>
+          <div class="qte"><button type="button" data-moins aria-label="Diminuer">−</button><input type="number" min="1" value="1" data-q aria-label="Quantité"><button type="button" data-plus aria-label="Augmenter">+</button></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-chantier" type="button" data-ajouter style="flex:1">Ajouter au panier</button><button class="btn btn-trait" type="button" data-devis>Demander un devis</button></div>
+        <p class="small muted" style="margin:12px 0 0" data-total></p>
+      </div>
+      <h2 style="font-size:1.3rem">Caractéristiques</h2>
+      <dl class="specs">${p.specs.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}<dt>Unité de vente</dt><dd>${esc(p.unite)}</dd></dl>
+      ${p.bim.length?`<h2 style="font-size:1.3rem;margin-top:32px">Fichiers BIM</h2><div class="fichiers">${p.bim.map(b=>b.url?`<a class="fichier" href="${b.url}" download><span><b>${b.f}</b> <span class="small muted">${esc(b.note)}</span></span><span class="small">Télécharger</span></a>`:`<div class="fichier"><span><b>${b.f}</b> <span class="small muted">${esc(b.note)}</span></span><span class="small muted">Inclus</span></div>`).join('')}</div>`:''}
+    </div>
+  </div>
+  <section style="padding-bottom:72px"><h2>Dans le même univers</h2><div class="grille" data-similaires></div></section>`;
+  const q=$('[data-q]');
+  const offre=()=>p.offres.find(o=>o.f===$('input[name=offre]:checked').value);
+  const maj=()=>{const o=offre();q.max=o.stock;let n=Math.max(1,Math.min(o.stock,parseInt(q.value)||1));q.value=n;$('[data-prix]').textContent=fcfa(o.prix);$('[data-total]').textContent=`${n} ${p.unite} pour ${fcfa(n*o.prix)} HT, livré par ${AZU.fournisseur(o.f).nom}.`};
+  $$('input[name=offre]').forEach(r=>r.addEventListener('change',maj));
+  q.addEventListener('input',maj);
+  $('[data-moins]').onclick=()=>{q.value=(parseInt(q.value)||1)-1;maj()};
+  $('[data-plus]').onclick=()=>{q.value=(parseInt(q.value)||1)+1;maj()};
+  $('[data-ajouter]').onclick=()=>{AZU.Cart.add(p.id,parseInt(q.value),offre().f);AZU.toast(`${esc(p.nom)} ajouté au panier. <a href="/panier">Voir le panier</a>`)};
+  $('[data-devis]').onclick=()=>{AZU.Cart.add(p.id,parseInt(q.value),offre().f);location.href='/panier?mode=devis'};
+  maj();
+  $('[data-similaires]').innerHTML=AZU.catalogue().filter(x=>x.univers===p.univers&&x.id!==p.id).slice(0,4).map(AZU.carte).join('')||'<p class="muted">D’autres produits arrivent bientôt dans cet univers.</p>';
+}
+</script>
+</body>
+</html>

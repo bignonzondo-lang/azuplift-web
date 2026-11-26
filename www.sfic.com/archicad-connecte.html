@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Extension Archicad | AZUPLIFT</title>
+<meta name="description" content="La palette AZUPLIFT dans Archicad 29. Placez des objets BIM réels et transformez la maquette en commande.">
+<link rel="stylesheet" href="/assets/app.css">
+<script src="/assets/app.js"></script>
+</head>
+<body>
+<div data-entete></div>
+<main id="contenu">
+<section class="hero"><div class="wrap">
+  <div>
+    <h1>Votre maquette sait déjà ce qu'il faut commander.</h1>
+    <p class="lead">L'extension AZUPLIFT ajoute une palette dans Archicad 29. Vous y cherchez un produit du catalogue, vous le placez sur le plan, et la maquette produit le quantitatif que l'entreprise commandera.</p>
+    <div class="btn-row"><a class="btn btn-chantier" href="/contact#rendezvous">Demander l'extension</a><a class="btn btn-trait" href="/produit?id=Furniture_Chairs_Stools_Benches_KOKUYO_Astrid_Lounge_Chair">Voir l'objet de démonstration</a></div>
+  </div>
+  <figure style="margin:0;justify-self:center;max-width:420px;border:8px solid var(--encre);border-radius:6px;box-shadow:0 40px 70px -40px rgba(19,35,58,.7)"><img src="/assets/img/palette-azuplift.png" alt="Palette AZUPLIFT dans Archicad 29" width="450" height="602"></figure>
+</div></section>
+
+<section class="section"><div class="wrap">
+  <div class="head-row"><h2>Ce que fait la palette</h2></div>
+  <div class="etapes">
+    <div class="etape"><h3>Chercher</h3><p>Le catalogue AZUPLIFT s'ouvre dans Archicad, avec les produits et leurs objets BIM.</p></div>
+    <div class="etape"><h3>Placer</h3><p>« Ajouter à Archicad » demande un point sur le plan. L'objet est créé dans une opération annulable.</p></div>
+    <div class="etape"><h3>Identifier</h3><p>Chaque objet reçoit sa référence produit AZUPLIFT, lue ensuite par la sélection et l'analyse.</p></div>
+    <div class="etape"><h3>Compter</h3><p>« Analyser le projet » regroupe les objets par produit et envoie le quantitatif au panier.</p></div>
+  </div>
+</div></section>
+
+<section class="section section-papier"><div class="wrap">
+  <div class="head-row"><h2>Où en est l'extension</h2><p class="lead">Nous distinguons ce qui fonctionne, ce qui est démontré et ce qui reste à construire.</p></div>
+  <div class="panneau"><div class="table-wrap"><table class="table"><thead><tr><th>Fonction</th><th>État</th><th>Précision</th></tr></thead><tbody>
+    <tr><td>Palette AZUPLIFT dans Archicad 29</td><td><span class="badge badge-ok">Fonctionnel</span></td><td>Six rubriques, site AZUPLIFT chargé dans la palette.</td></tr>
+    <tr><td>Placement d'un objet du catalogue</td><td><span class="badge badge-ok">Fonctionnel</span></td><td>Validé sur l'Astrid Lounge Chair, objet GSM fourni avec l'extension.</td></tr>
+    <tr><td>Lecture de la sélection</td><td><span class="badge badge-ok">Fonctionnel</span></td><td>Mise à jour automatique quand vous sélectionnez dans la maquette.</td></tr>
+    <tr><td>Quantitatif par produit</td><td><span class="badge badge-ok">Fonctionnel</span></td><td>Seuls les objets AZUPLIFT sont comptés, à l'unité.</td></tr>
+    <tr><td>Envoi du quantitatif au panier</td><td><span class="badge badge-attente">Démonstration</span></td><td>Panier et paiement simulés dans le navigateur.</td></tr>
+    <tr><td>Catalogue BIM élargi</td><td><span class="badge">À venir</span></td><td>Correspondance produit et objet Archicad pour chaque fournisseur.</td></tr>
+    <tr><td>Surfaces, longueurs et volumes</td><td><span class="badge">À venir</span></td><td>Règles de mesure par famille de produits.</td></tr>
+    <tr><td>Synchronisation des projets</td><td><span class="badge">À venir</span></td><td>Nécessite le serveur AZUPLIFT.</td></tr>
+  </tbody></table></div></div>
+</div></section>
+
+<section class="section"><div class="wrap faq">
+  <h2>Questions fréquentes</h2>
+  <details><summary>Quelle version d'Archicad faut il&nbsp;?</summary><p>L'extension est développée pour Archicad 29 sous Windows. D'autres versions seront proposées selon la demande des cabinets.</p></details>
+  <details><summary>Les objets placés restent ils dans le projet si je désinstalle l'extension&nbsp;?</summary><p>Oui. Ce sont des objets Archicad standards, accompagnés de leur bibliothèque. La référence produit est stockée sur l'élément.</p></details>
+  <details><summary>Le quantitatif inclut il les objets qui ne viennent pas d'AZUPLIFT&nbsp;?</summary><p>Non. Le quantitatif commercial ne compte que les objets placés depuis AZUPLIFT. Un comptage technique de la maquette est disponible à part.</p></details>
+  <details><summary>Mes plans sont ils envoyés sur un serveur&nbsp;?</summary><p>Non. L'extension lit les objets nécessaires au quantitatif. Aucune géométrie ni aucun plan ne quitte votre poste.</p></details>
+</div></section>
+</main>
+<div data-pied></div>
+<script>AZU.monter('archicad');</script>
+</body>
+</html>
